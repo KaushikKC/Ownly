@@ -1,0 +1,186 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Bell, Plus, Menu } from "lucide-react"
+import IPCard from "@/components/ip-card"
+import IPDetailModal from "@/components/ip-detail-modal"
+import Sidebar from "@/components/sidebar"
+
+interface DashboardPageProps {
+  userEmail: string
+  onNavigate: (page: "dashboard" | "add-ip" | "approvals" | "login" | "verify-ip" | "settings") => void
+}
+
+const mockIPs = [
+  {
+    id: "1",
+    title: "Sunset Beats – Remix License",
+    thumbnail: "/sunset-beats-music-video.jpg",
+    platform: "YouTube",
+    collaborators: ["@alexwave", "@mira.codes"],
+    licenseType: "Commercial Remix",
+    status: "Registered",
+    ownership: "50%",
+  },
+  {
+    id: "2",
+    title: "Ocean Reels Collaboration",
+    thumbnail: "/ocean-waves-video.png",
+    platform: "YouTube",
+    collaborators: ["@johnfilm"],
+    licenseType: "Non-Commercial",
+    status: "Registered",
+    ownership: "50%",
+  },
+  {
+    id: "3",
+    title: "TechTalk Ep. 4",
+    thumbnail: "/tech-talk-podcast.jpg",
+    platform: "YouTube",
+    collaborators: ["@alexwave", "@mira.codes", "@johnfilm"],
+    licenseType: "Private Draft",
+    status: "Draft",
+    ownership: "50%",
+  },
+  {
+    id: "4",
+    title: "Summer Vibes Mix",
+    thumbnail: "/summer-music-mix.jpg",
+    platform: "Instagram",
+    collaborators: ["@mira.codes"],
+    licenseType: "Commercial Remix",
+    status: "Registered",
+    ownership: "75%",
+  },
+  {
+    id: "5",
+    title: "Creative Collab Series",
+    thumbnail: "/creative-collaboration.jpg",
+    platform: "YouTube",
+    collaborators: ["@alexwave", "@johnfilm"],
+    licenseType: "Commercial Remix",
+    status: "Registered",
+    ownership: "40%",
+  },
+  {
+    id: "6",
+    title: "Podcast Episode 12",
+    thumbnail: "/podcast-recording.jpg",
+    platform: "YouTube",
+    collaborators: [],
+    licenseType: "Non-Commercial",
+    status: "Registered",
+    ownership: "100%",
+  },
+  {
+    id: "7",
+    title: "Behind the Scenes",
+    thumbnail: "/behind-the-scenes-footage.jpg",
+    platform: "Instagram",
+    collaborators: ["@mira.codes"],
+    licenseType: "Private Draft",
+    status: "Draft",
+    ownership: "100%",
+  },
+  {
+    id: "8",
+    title: "Music Production Tutorial",
+    thumbnail: "/music-production-tutorial.jpg",
+    platform: "YouTube",
+    collaborators: ["@johnfilm"],
+    licenseType: "Non-Commercial",
+    status: "Registered",
+    ownership: "60%",
+  },
+]
+
+export default function DashboardPage({ userEmail, onNavigate }: DashboardPageProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [selectedIP, setSelectedIP] = useState<(typeof mockIPs)[0] | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const handleIPSelect = (ip: (typeof mockIPs)[0]) => {
+    setSelectedIP(ip)
+    setIsModalOpen(true)
+  }
+
+  return (
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} onNavigate={onNavigate} onClose={() => setSidebarOpen(false)} />
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top bar */}
+        <div className="border-b border-border bg-card">
+          <div className="flex items-center justify-between h-16 px-6">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-muted rounded-lg">
+                <Menu className="w-5 h-5" />
+              </button>
+              <h2 className="text-lg font-semibold text-foreground">My IPs</h2>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="p-2 hover:bg-muted rounded-lg relative">
+                <Bell className="w-5 h-5 text-muted-foreground" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+              </button>
+              <div className="flex items-center gap-3 pl-4 border-l border-border">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-xs font-semibold text-primary">{userEmail.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium text-foreground">{userEmail || "User"}</p>
+                  <p className="text-xs text-muted-foreground">0xA23F...4F9B</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main area */}
+        <div className="flex-1 overflow-auto">
+          <div className="p-6 sm:p-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              <Card className="p-6 bg-card border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Total Registered IPs</p>
+                <p className="text-3xl font-bold text-foreground">8</p>
+              </Card>
+              <Card className="p-6 bg-card border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Active Collaborations</p>
+                <p className="text-3xl font-bold text-foreground">3</p>
+              </Card>
+              <Card className="p-6 bg-card border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Royalties Earned</p>
+                <p className="text-3xl font-bold text-foreground">$1,240</p>
+              </Card>
+            </div>
+
+            {/* IP Cards */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">My IPs</h3>
+                <Button
+                  onClick={() => onNavigate("add-ip")}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New IP
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {mockIPs.map((ip) => (
+                  <IPCard key={ip.id} {...ip} onSelect={handleIPSelect} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <IPDetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} ip={selectedIP} />
+    </div>
+  )
+}
