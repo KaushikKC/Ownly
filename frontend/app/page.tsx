@@ -9,6 +9,7 @@ import ApprovalsPage from "@/components/pages/approvals-page";
 import VerifyIPPage from "@/components/pages/verify-ip-page";
 import SettingsPage from "@/components/pages/settings-page";
 import { AuthGuard } from "@/components/auth-guard";
+import { AuthDebug } from "@/components/auth-debug";
 
 type PageType =
   | "login"
@@ -48,6 +49,7 @@ export default function Home() {
     return (
       <main className="min-h-screen bg-background">
         <LoginPage onLogin={handleLogin} />
+        <AuthDebug />
       </main>
     );
   }

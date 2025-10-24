@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Wallet, Mail, Instagram, Check, Loader2 } from "lucide-react";
@@ -48,6 +48,18 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   const canProceed = walletAddress && user;
+
+  // Auto-proceed when both wallet and Google are connected
+  useEffect(() => {
+    if (canProceed) {
+      onLogin(
+        email || user?.email || "user@example.com",
+        walletAddress,
+        user?.email || "",
+        "" // Instagram will be added later
+      );
+    }
+  }, [canProceed, user, walletAddress, email, onLogin]);
 
   return (
     <div className="min-h-screen flex">

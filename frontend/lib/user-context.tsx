@@ -1,11 +1,16 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { createContext, useContext, useState } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 
 interface UserContextType {
-  user: any;
+  user: {
+    id?: string;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+  } | null;
   walletAddress: string | null;
   isConnected: boolean;
   isLoading: boolean;
@@ -45,8 +50,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const connectGoogle = async () => {
     try {
       setIsLoading(true);
-      // This will be handled by NextAuth
-      window.location.href = "/api/auth/signin/google";
+      await signIn("google", { callbackUrl: "/" });
     } catch (error) {
       console.error("Failed to connect Google:", error);
     } finally {
@@ -57,7 +61,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const disconnectGoogle = async () => {
     try {
       setIsLoading(true);
-      window.location.href = "/api/auth/signout";
+      await signOut({ callbackUrl: "/" });
     } catch (error) {
       console.error("Failed to disconnect Google:", error);
     } finally {
