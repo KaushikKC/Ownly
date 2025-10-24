@@ -1,50 +1,93 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import LoginPage from "@/components/pages/login-page"
-import DashboardPage from "@/components/pages/dashboard-page"
-import AddIPPage from "@/components/pages/add-ip-page"
-import ApprovalsPage from "@/components/pages/approvals-page"
-import VerifyIPPage from "@/components/pages/verify-ip-page"
-import SettingsPage from "@/components/pages/settings-page"
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import LoginPage from "@/components/pages/login-page";
+import DashboardPage from "@/components/pages/dashboard-page";
+import AddIPPage from "@/components/pages/add-ip-page";
+import ApprovalsPage from "@/components/pages/approvals-page";
+import VerifyIPPage from "@/components/pages/verify-ip-page";
+import SettingsPage from "@/components/pages/settings-page";
+import { AuthGuard } from "@/components/auth-guard";
 
-type PageType = "login" | "dashboard" | "add-ip" | "approvals" | "verify-ip" | "settings"
+type PageType =
+  | "login"
+  | "dashboard"
+  | "add-ip"
+  | "approvals"
+  | "verify-ip"
+  | "settings";
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState<PageType>("login")
-  const [userEmail, setUserEmail] = useState("")
-  const [connectedWallet, setConnectedWallet] = useState("")
-  const [connectedGoogle, setConnectedGoogle] = useState("")
-  const [connectedInstagram, setConnectedInstagram] = useState("")
+  const { data: session, status } = useSession();
+  const [currentPage, setCurrentPage] = useState<PageType>("login");
+  const [userEmail, setUserEmail] = useState("");
+  const [connectedWallet, setConnectedWallet] = useState("");
+  const [connectedGoogle, setConnectedGoogle] = useState("");
+  const [connectedInstagram, setConnectedInstagram] = useState("");
 
-  const handleLogin = (email: string, wallet: string, google: string, instagram: string) => {
-    setUserEmail(email)
-    setConnectedWallet(wallet)
-    setConnectedGoogle(google)
-    setConnectedInstagram(instagram)
-    setCurrentPage("dashboard")
-  }
+  const handleLogin = (
+    email: string,
+    wallet: string,
+    google: string,
+    instagram: string
+  ) => {
+    setUserEmail(email);
+    setConnectedWallet(wallet);
+    setConnectedGoogle(google);
+    setConnectedInstagram(instagram);
+    setCurrentPage("dashboard");
+  };
 
   const handleNavigate = (page: PageType) => {
-    setCurrentPage(page)
+    setCurrentPage(page);
+  };
+
+  // Show login page if not authenticated
+  if (status === "unauthenticated" || currentPage === "login") {
+    return (
+      <main className="min-h-screen bg-background">
+        <LoginPage onLogin={handleLogin} />
+      </main>
+    );
   }
 
+  // Show loading state
+  if (status === "loading") {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Show authenticated content
   return (
-    <main className="min-h-screen bg-background">
-      {currentPage === "login" && <LoginPage onLogin={handleLogin} />}
-      {currentPage === "dashboard" && <DashboardPage userEmail={userEmail} onNavigate={handleNavigate} />}
-      {currentPage === "add-ip" && <AddIPPage onNavigate={handleNavigate} />}
-      {currentPage === "approvals" && <ApprovalsPage onNavigate={handleNavigate} />}
-      {currentPage === "verify-ip" && <VerifyIPPage onNavigate={handleNavigate} />}
-      {currentPage === "settings" && (
-        <SettingsPage
-          userEmail={userEmail}
-          wallet={connectedWallet}
-          google={connectedGoogle}
-          instagram={connectedInstagram}
-          onNavigate={handleNavigate}
-        />
-      )}
-    </main>
-  )
+    <AuthGuard>
+      <main className="min-h-screen bg-background">
+        {currentPage === "dashboard" && (
+          <DashboardPage userEmail={userEmail} onNavigate={handleNavigate} />
+        )}
+        {currentPage === "add-ip" && <AddIPPage onNavigate={handleNavigate} />}
+        {currentPage === "approvals" && (
+          <ApprovalsPage onNavigate={handleNavigate} />
+        )}
+        {currentPage === "verify-ip" && (
+          <VerifyIPPage onNavigate={handleNavigate} />
+        )}
+        {currentPage === "settings" && (
+          <SettingsPage
+            userEmail={userEmail}
+            wallet={connectedWallet}
+            google={connectedGoogle}
+            instagram={connectedInstagram}
+            onNavigate={handleNavigate}
+          />
+        )}
+      </main>
+    </AuthGuard>
+  );
 }
