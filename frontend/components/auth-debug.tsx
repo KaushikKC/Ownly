@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useUser } from "@/lib/user-context";
 
 export function AuthDebug() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { user, walletAddress, isConnected } = useUser();
 
   if (process.env.NODE_ENV !== "development") {

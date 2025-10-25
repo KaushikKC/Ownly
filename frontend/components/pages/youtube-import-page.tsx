@@ -16,11 +16,7 @@ import {
   Youtube,
   Play,
   Clock,
-  Eye,
-  ThumbsUp,
-  MessageCircle,
   CheckCircle,
-  AlertCircle,
   Loader2,
   ExternalLink,
   Download,
@@ -37,20 +33,53 @@ interface YouTubeVideo {
   url: string;
 }
 
+type PageType =
+  | "login"
+  | "dashboard"
+  | "add-ip"
+  | "approvals"
+  | "verify-ip"
+  | "settings"
+  | "youtube-import"
+  | "license-video"
+  | "youtube-link";
+
 interface ImportPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: PageType) => void;
 }
 
 export default function YouTubeImportPage({ onNavigate }: ImportPageProps) {
-  const { user } = useUser();
+  const {} = useUser();
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [selectedVideos, setSelectedVideos] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importResults, setImportResults] = useState<any>(null);
+  const [importResults, setImportResults] = useState<{
+    success: boolean;
+    importedCount: number;
+    errorCount: number;
+    importedAssets: unknown[];
+    errors: unknown[];
+    registeredCount?: number;
+    registeredAssets?: unknown[];
+  } | null>(null);
   const [accessToken, setAccessToken] = useState<string>("");
   const [manualUrl, setManualUrl] = useState<string>("");
-  const [manualVideo, setManualVideo] = useState<any>(null);
+  const [manualVideo, setManualVideo] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    thumbnailUrl: string;
+    duration: number;
+    viewCount: number;
+    likeCount: number;
+    commentCount: number;
+    publishedAt: string;
+    channelTitle: string;
+    url: string;
+    sourcePlatform?: string;
+    sourceUrl?: string;
+  } | null>(null);
   const [isCheckingUrl, setIsCheckingUrl] = useState(false);
 
   // Get YouTube access token from Google OAuth
@@ -115,8 +144,13 @@ export default function YouTubeImportPage({ onNavigate }: ImportPageProps) {
         collaborators: [],
         license: {
           type: "commercial",
+          price: 0,
           royaltyPercentage: 0,
           terms: "Standard commercial license",
+          commercialUse: true,
+          attributionRequired: true,
+          exclusivity: "non-exclusive",
+          status: "active",
         },
       });
 
@@ -159,13 +193,23 @@ export default function YouTubeImportPage({ onNavigate }: ImportPageProps) {
         collaborators: [],
         license: {
           type: "commercial",
+          price: 0,
           royaltyPercentage: 0,
           terms: "Standard commercial license",
+          commercialUse: true,
+          attributionRequired: true,
+          exclusivity: "non-exclusive",
+          status: "active",
         },
       });
 
       if (response.success) {
         setImportResults({
+          success: true,
+          importedCount: 1,
+          errorCount: 0,
+          importedAssets: [response.asset],
+          errors: [],
           registeredCount: 1,
           registeredAssets: [response.asset],
         });

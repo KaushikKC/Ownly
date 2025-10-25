@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosInstance } from "axios";
 
 class ApiClient {
   private client: AxiosInstance;
@@ -83,7 +83,7 @@ class ApiClient {
     walletAddress?: string;
     instagramHandle?: string;
     youtubeChannelId?: string;
-    preferences?: any;
+    preferences?: Record<string, unknown>;
   }) {
     const response = await this.client.put("/auth/me", profileData);
     return response.data;
@@ -120,8 +120,23 @@ class ApiClient {
     contentHash?: string;
     audioFingerprint?: string;
     visualFingerprint?: string;
-    collaborators?: any[];
-    license?: any;
+    collaborators?: {
+      userId: string;
+      walletAddress: string;
+      ownershipPercentage: number;
+      role: string;
+      approved: boolean;
+    }[];
+    license?: {
+      type: string;
+      price: number;
+      royaltyPercentage: number;
+      terms: string;
+      commercialUse: boolean;
+      attributionRequired: boolean;
+      exclusivity: string;
+      status: string;
+    };
   }) {
     const response = await this.client.post("/ip-assets", assetData);
     return response.data;
@@ -132,7 +147,38 @@ class ApiClient {
     return response.data;
   }
 
-  async updateIPAsset(id: string, assetData: any) {
+  async updateIPAsset(
+    id: string,
+    assetData: {
+      title?: string;
+      description?: string;
+      sourceUrl?: string;
+      sourcePlatform?: string;
+      thumbnailUrl?: string;
+      duration?: number;
+      fileSize?: number;
+      contentHash?: string;
+      audioFingerprint?: string;
+      visualFingerprint?: string;
+      collaborators?: {
+        userId: string;
+        walletAddress: string;
+        ownershipPercentage: number;
+        role: string;
+        approved: boolean;
+      }[];
+      license?: {
+        type: string;
+        price: number;
+        royaltyPercentage: number;
+        terms: string;
+        commercialUse: boolean;
+        attributionRequired: boolean;
+        exclusivity: string;
+        status: string;
+      };
+    }
+  ) {
     const response = await this.client.put(`/ip-assets/${id}`, assetData);
     return response.data;
   }
@@ -189,8 +235,23 @@ class ApiClient {
   async registerYouTubeVideo(data: {
     videoUrl: string;
     accessToken: string;
-    collaborators?: any[];
-    license?: any;
+    collaborators?: {
+      userId: string;
+      walletAddress: string;
+      ownershipPercentage: number;
+      role: string;
+      approved: boolean;
+    }[];
+    license?: {
+      type: string;
+      price: number;
+      royaltyPercentage: number;
+      terms: string;
+      commercialUse: boolean;
+      attributionRequired: boolean;
+      exclusivity: string;
+      status: string;
+    };
   }) {
     const response = await this.client.post("/youtube/register-video", data);
     return response.data;
@@ -199,8 +260,23 @@ class ApiClient {
   async bulkRegisterYouTubeVideos(data: {
     accessToken: string;
     maxResults?: number;
-    collaborators?: any[];
-    license?: any;
+    collaborators?: {
+      userId: string;
+      walletAddress: string;
+      ownershipPercentage: number;
+      role: string;
+      approved: boolean;
+    }[];
+    license?: {
+      type: string;
+      price: number;
+      royaltyPercentage: number;
+      terms: string;
+      commercialUse: boolean;
+      attributionRequired: boolean;
+      exclusivity: string;
+      status: string;
+    };
   }) {
     const response = await this.client.post("/youtube/bulk-register", data);
     return response.data;
@@ -247,8 +323,23 @@ class ApiClient {
   async registerInstagramMedia(data: {
     mediaUrl: string;
     accessToken: string;
-    collaborators?: any[];
-    license?: any;
+    collaborators?: {
+      userId: string;
+      walletAddress: string;
+      ownershipPercentage: number;
+      role: string;
+      approved: boolean;
+    }[];
+    license?: {
+      type: string;
+      price: number;
+      royaltyPercentage: number;
+      terms: string;
+      commercialUse: boolean;
+      attributionRequired: boolean;
+      exclusivity: string;
+      status: string;
+    };
   }) {
     const response = await this.client.post("/instagram/register-media", data);
     return response.data;
@@ -257,8 +348,23 @@ class ApiClient {
   async bulkRegisterInstagramMedia(data: {
     accessToken: string;
     limit?: number;
-    collaborators?: any[];
-    license?: any;
+    collaborators?: {
+      userId: string;
+      walletAddress: string;
+      ownershipPercentage: number;
+      role: string;
+      approved: boolean;
+    }[];
+    license?: {
+      type: string;
+      price: number;
+      royaltyPercentage: number;
+      terms: string;
+      commercialUse: boolean;
+      attributionRequired: boolean;
+      exclusivity: string;
+      status: string;
+    };
   }) {
     const response = await this.client.post("/instagram/bulk-register", data);
     return response.data;

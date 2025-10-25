@@ -23,8 +23,19 @@ interface UserContextType {
   connectGoogle: () => void;
   disconnectGoogle: () => void;
   logout: () => void;
-  registerUser: (userData: any) => Promise<void>;
-  updateProfile: (profileData: any) => Promise<void>;
+  registerUser: (userData: {
+    email: string;
+    name: string;
+    profilePicture?: string;
+    googleId?: string;
+    walletAddress?: string;
+  }) => Promise<void>;
+  updateProfile: (profileData: {
+    walletAddress?: string;
+    instagramHandle?: string;
+    youtubeChannelId?: string;
+    preferences?: Record<string, unknown>;
+  }) => Promise<void>;
   linkYouTubeChannel: (accessToken: string) => Promise<void>;
 }
 
@@ -37,7 +48,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const { disconnect } = useDisconnect();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [backendUser, setBackendUser] = useState<any>(null);
+  const [backendUser, setBackendUser] = useState<{
+    id: string;
+    email: string;
+    name: string;
+    profilePicture?: string;
+    walletAddress?: string;
+    instagramHandle?: string;
+    youtubeChannelId?: string;
+    preferences?: Record<string, unknown>;
+  } | null>(null);
 
   // Sync with backend when session or wallet changes
   useEffect(() => {
@@ -46,10 +66,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         try {
           // Register/update user in backend
           const response = await registerUser({
-            email: session.user.email,
-            name: session.user.name,
-            profilePicture: session.user.image,
-            googleId: session.user.id,
+            email: session.user.email || "",
+            name: session.user.name || "",
+            profilePicture: session.user.image || undefined,
+            googleId: session.user.id || undefined,
             walletAddress: address,
           });
 
@@ -132,7 +152,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const registerUser = async (userData: any) => {
+  const registerUser = async (userData: {
+    email: string;
+    name: string;
+    profilePicture?: string;
+    googleId?: string;
+    walletAddress?: string;
+  }) => {
     try {
       setIsLoading(true);
       const response = await apiClient.registerUser(userData);
@@ -148,7 +174,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateProfile = async (profileData: any) => {
+  const updateProfile = async (profileData: {
+    walletAddress?: string;
+    instagramHandle?: string;
+    youtubeChannelId?: string;
+    preferences?: Record<string, unknown>;
+  }) => {
     try {
       setIsLoading(true);
       const response = await apiClient.updateUserProfile(profileData);
@@ -170,7 +201,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const response = await apiClient.linkYouTubeChannel(accessToken);
       if (response.success) {
         // Update user context with YouTube channel info
-        setBackendUser((prev) =>
+        setBackendUser((prev: typeof backendUser) =>
           prev
             ? {
                 ...prev,

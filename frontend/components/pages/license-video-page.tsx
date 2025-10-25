@@ -61,8 +61,19 @@ interface LicenseForm {
   exclusivity: string;
 }
 
+type PageType =
+  | "login"
+  | "dashboard"
+  | "add-ip"
+  | "approvals"
+  | "verify-ip"
+  | "settings"
+  | "youtube-import"
+  | "license-video"
+  | "youtube-link";
+
 interface LicenseVideoPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: PageType) => void;
 }
 
 export default function LicenseVideoPage({

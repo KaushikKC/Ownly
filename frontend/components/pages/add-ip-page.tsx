@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -21,14 +21,10 @@ interface AddIPPageProps {
   ) => void;
 }
 
-const mockCollaborators = [
-  { id: "1", name: "@alexwave", wallet: "0xA23F...4F9B", approval: true },
-  { id: "2", name: "@mira.codes", wallet: "0xB14E...A55D", approval: false },
-  { id: "3", name: "@johnfilm", wallet: "0xD44C...72CC", approval: true },
-];
+// Mock collaborators removed as they were unused
 
 export default function AddIPPage({ onNavigate }: AddIPPageProps) {
-  const { isConnected, user } = useUser();
+  const { user } = useUser();
   const [step, setStep] = useState(1);
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
@@ -42,7 +38,11 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [ownershipStatus, setOwnershipStatus] = useState<{
     isOwner: boolean;
-    channelInfo: any;
+    channelInfo: {
+      channelId: string;
+      channelTitle: string;
+      channelUrl: string;
+    } | null;
     message: string;
   } | null>(null);
   const [isVerifyingOwnership, setIsVerifyingOwnership] = useState(false);

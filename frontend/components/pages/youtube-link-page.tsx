@@ -4,13 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowLeft,
-  Youtube,
-  Check,
-  AlertCircle,
-  ExternalLink,
-} from "lucide-react";
+import { ArrowLeft, Youtube, Check, AlertCircle } from "lucide-react";
 import { useUser } from "@/lib/user-context";
 
 interface YouTubeLinkPageProps {
@@ -26,7 +20,7 @@ interface YouTubeLinkPageProps {
 }
 
 export default function YouTubeLinkPage({ onNavigate }: YouTubeLinkPageProps) {
-  const { user, linkYouTubeChannel, updateProfile } = useUser();
+  const { user, updateProfile } = useUser();
   const [channelId, setChannelId] = useState("");
   const [isLinking, setIsLinking] = useState(false);
   const [linkStatus, setLinkStatus] = useState<{
@@ -238,7 +232,7 @@ export default function YouTubeLinkPage({ onNavigate }: YouTubeLinkPageProps) {
                   3
                 </span>
                 <p>
-                  Copy the part after <code>/channel/</code> - that's your
+                  Copy the part after <code>/channel/</code> - that&apos;s your
                   Channel ID
                 </p>
               </div>

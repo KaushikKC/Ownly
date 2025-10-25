@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Bell, Plus, Menu, Youtube, Shield, LogOut } from "lucide-react";
+import { Bell, Plus, Menu, Youtube, LogOut } from "lucide-react";
 import IPCard from "@/components/ip-card";
 import IPDetailModal from "@/components/ip-detail-modal";
 import Sidebar from "@/components/sidebar";
