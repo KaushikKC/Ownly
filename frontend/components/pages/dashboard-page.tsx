@@ -145,7 +145,7 @@ export default function DashboardPage({
   userEmail,
   onNavigate,
 }: DashboardPageProps) {
-  const { logout } = useUser();
+  const { user, logout } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedIP, setSelectedIP] = useState<(typeof mockIPs)[0] | null>(
     null
