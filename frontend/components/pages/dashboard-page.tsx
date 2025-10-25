@@ -159,7 +159,7 @@ export default function DashboardPage({
     const loadUserAssets = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.getMyAssets();
+        const response = await apiClient.getMyAssets(user?.id);
         if (response.success) {
           setUserAssets(response.assets);
         }

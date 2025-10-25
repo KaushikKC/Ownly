@@ -95,8 +95,10 @@ class ApiClient {
   }
 
   // IP Assets endpoints
-  async getMyAssets() {
-    const response = await this.client.get("/ip-assets/my-assets");
+  async getMyAssets(userId?: string) {
+    const response = await this.client.get("/ip-assets/my-assets", {
+      params: { userId },
+    });
     return response.data;
   }
 
@@ -120,6 +122,7 @@ class ApiClient {
     contentHash?: string;
     audioFingerprint?: string;
     visualFingerprint?: string;
+    ownerId?: string; // Add ownerId to the type definition
     collaborators?: {
       userId: string;
       walletAddress: string;

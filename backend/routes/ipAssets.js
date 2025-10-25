@@ -6,9 +6,18 @@ const auth = require("../middleware/auth");
 const router = express.Router();
 
 // Get all IP assets for a user
-router.get("/my-assets", auth, async (req, res) => {
+router.get("/my-assets", async (req, res) => {
   try {
-    const assets = await IPAsset.find({ owner: req.user.userId })
+    const { userId } = req.query; // Get userId from query parameters
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const assets = await IPAsset.find({ owner: userId })
       .populate("owner", "name email profilePicture")
       .populate("collaborators.userId", "name email walletAddress")
       .sort({ createdAt: -1 });
@@ -81,6 +90,9 @@ router.get("/disputed-ips", async (req, res) => {
 // Create new IP asset
 router.post("/", async (req, res) => {
   try {
+    console.log("=== POST /ip-assets ===");
+    console.log("Request body keys:", Object.keys(req.body));
+    console.log("ownerId in body:", req.body.ownerId);
     const {
       title,
       description,
@@ -94,7 +106,12 @@ router.post("/", async (req, res) => {
       visualFingerprint,
       collaborators,
       license,
+      ownerId, // Get owner ID from request body
+      owner, // Alternative field name
     } = req.body;
+
+    console.log("Creating IP asset with ownerId:", ownerId);
+    console.log("Full request body:", JSON.stringify(req.body, null, 2));
 
     // Check if asset with same URL already exists
     const existingAsset = await IPAsset.findOne({ sourceUrl });
@@ -110,6 +127,10 @@ router.post("/", async (req, res) => {
       });
     }
 
+    const finalOwnerId =
+      ownerId || owner || req.user?.userId || "507f1f77bcf86cd799439011";
+    console.log("Final owner ID:", finalOwnerId);
+
     const asset = new IPAsset({
       title,
       description,
@@ -121,7 +142,7 @@ router.post("/", async (req, res) => {
       contentHash,
       audioFingerprint,
       visualFingerprint,
-      owner: req.user?.userId || "507f1f77bcf86cd799439011", // Default user ID for testing
+      owner: finalOwnerId, // Use ownerId from request body
       collaborators: collaborators || [],
       license: license || {},
     });
@@ -243,15 +264,22 @@ router.post("/check-url", async (req, res) => {
 // Check for IP violations/duplicates
 router.post("/check-violations", async (req, res) => {
   try {
-    const { sourceUrl, title, thumbnailUrl } = req.body;
+    const { sourceUrl, title, thumbnailUrl, currentUserId } = req.body;
 
-    // Check for exact URL matches
+    console.log("Checking violations for:", {
+      sourceUrl,
+      title,
+      thumbnailUrl,
+      currentUserId,
+    });
+
+    // Check for exact URL matches (always a violation regardless of user)
     const urlMatch = await IPAsset.findOne({
       sourceUrl: sourceUrl,
       status: { $in: ["registered", "pending"] },
     }).populate("owner", "name email");
 
-    // Advanced title similarity detection
+    // Advanced title similarity detection - only flag if same user or very high similarity
     const titleMatches = await IPAsset.find({
       $or: [
         { title: { $regex: title, $options: "i" } },
@@ -329,16 +357,55 @@ router.post("/check-violations", async (req, res) => {
       })),
     };
 
-    // Filter matches by similarity threshold
+    // Log all found matches before filtering
+    console.log("Found title matches:", violations.titleMatches.length);
+    console.log("Found thumbnail matches:", violations.thumbnailMatches.length);
+
+    // Filter matches by similarity threshold and user context
     const SIMILARITY_THRESHOLD = 0.7;
-    const filteredTitleMatches = violations.titleMatches.filter(
-      (match) => match.similarity >= SIMILARITY_THRESHOLD
+    const filteredTitleMatches = violations.titleMatches.filter((match) => {
+      const similarity = match.similarity;
+      const isSameUser =
+        currentUserId &&
+        match.owner &&
+        match.owner._id.toString() === currentUserId;
+
+      // Flag if: same user OR very high similarity (95%+)
+      // For legacy data without owner info, only flag if very high similarity (98%+)
+      return (
+        similarity >= SIMILARITY_THRESHOLD &&
+        (isSameUser ||
+          similarity >= 0.95 ||
+          (!match.owner && similarity >= 0.98))
+      );
+    });
+
+    // Filter thumbnail matches similarly
+    const filteredThumbnailMatches = violations.thumbnailMatches.filter(
+      (match) => {
+        const isSameUser =
+          currentUserId &&
+          match.owner &&
+          match.owner._id.toString() === currentUserId;
+        // Flag if: same user OR exact thumbnail match
+        // For legacy data without owner info, only flag exact matches
+        return isSameUser || match.similarity >= 1.0;
+      }
     );
 
+    // Log filtered results
+    console.log("Filtered title matches:", filteredTitleMatches.length);
+    console.log("Filtered thumbnail matches:", filteredThumbnailMatches.length);
+    console.log("URL match:", !!violations.urlMatch);
+
+    // URL matches are always violations (same URL = same video)
+    // Title/thumbnail matches are only violations if filtered
     const hasViolations =
-      violations.urlMatch ||
+      !!violations.urlMatch ||
       filteredTitleMatches.length > 0 ||
-      violations.thumbnailMatches.length > 0;
+      filteredThumbnailMatches.length > 0;
+
+    console.log("Final hasViolations:", hasViolations);
 
     res.json({
       success: true,
@@ -346,6 +413,7 @@ router.post("/check-violations", async (req, res) => {
       violations: {
         ...violations,
         titleMatches: filteredTitleMatches,
+        thumbnailMatches: filteredThumbnailMatches,
       },
     });
   } catch (error) {

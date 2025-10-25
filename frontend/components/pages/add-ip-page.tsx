@@ -121,7 +121,10 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
           setChannelTitle(video.channelTitle || "Unknown Channel");
 
           // Verify ownership
-          await verifyOwnership(newUrl);
+          await verifyOwnership(newUrl, {
+            title: video.title,
+            thumbnailUrl: video.thumbnailUrl,
+          });
         } else {
           setVideoError("Video not found or not accessible");
         }
@@ -135,7 +138,10 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
   };
 
   // Verify ownership of the YouTube channel
-  const verifyOwnership = async (videoUrl: string) => {
+  const verifyOwnership = async (
+    videoUrl: string,
+    videoData?: { title: string; thumbnailUrl: string }
+  ) => {
     try {
       setIsVerifyingOwnership(true);
       const userEmail = user?.email;
@@ -194,11 +200,18 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
 
           // Check for IP violations
           try {
-            const violationResponse = await apiClient.checkViolations({
-              sourceUrl: url,
-              title: title,
-              thumbnailUrl: thumbnailUrl,
-            });
+            const violationData = {
+              sourceUrl: videoUrl,
+              title: videoData?.title || title,
+              thumbnailUrl: videoData?.thumbnailUrl || thumbnailUrl,
+              currentUserId: user?.id, // Pass current user ID for intelligent filtering
+            };
+
+            console.log("Checking violations with data:", violationData);
+
+            const violationResponse = await apiClient.checkViolations(
+              violationData
+            );
 
             if (violationResponse.hasViolations) {
               setViolations(violationResponse.violations);
@@ -241,6 +254,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
         sourcePlatform: "youtube",
         thumbnailUrl,
         duration,
+        ownerId: user?.id, // Pass the current user's ID
         collaborators:
           selectedCollaborators.length > 0
             ? selectedCollaborators.map((c) => ({
