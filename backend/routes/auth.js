@@ -112,6 +112,67 @@ router.put("/me", auth, async (req, res) => {
   }
 });
 
+// Fetch and store user's YouTube channel
+router.post("/youtube-channel", auth, async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({
+        success: false,
+        message: "YouTube access token is required",
+      });
+    }
+
+    const youtubeService = require("../services/youtubeService");
+
+    // Get user's YouTube channel information
+    const channelInfo = await youtubeService.getUserYouTubeChannelWithOAuth(
+      accessToken
+    );
+
+    if (!channelInfo) {
+      return res.status(404).json({
+        success: false,
+        message: "No YouTube channel found for this account",
+      });
+    }
+
+    // Update user with YouTube channel ID
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    user.youtubeChannelId = channelInfo.channelId;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "YouTube channel linked successfully",
+      channelInfo: {
+        channelId: channelInfo.channelId,
+        title: channelInfo.title,
+        description: channelInfo.description,
+        thumbnailUrl: channelInfo.thumbnailUrl,
+        subscriberCount: channelInfo.subscriberCount,
+        videoCount: channelInfo.videoCount,
+        viewCount: channelInfo.viewCount,
+      },
+    });
+  } catch (error) {
+    console.error("Link YouTube channel error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to link YouTube channel",
+      error: error.message,
+    });
+  }
+});
+
 // Verify token endpoint
 router.get("/verify", auth, (req, res) => {
   res.json({

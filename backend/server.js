@@ -23,6 +23,8 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/ip-assets", require("./routes/ipAssets"));
 app.use("/api/collaborators", require("./routes/collaborators"));
+app.use("/api/youtube", require("./routes/youtube"));
+app.use("/api/instagram", require("./routes/instagram"));
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -46,7 +48,7 @@ app.use((err, req, res, next) => {
 });
 
 // 404 handler
-app.use("*", (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 

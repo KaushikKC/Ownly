@@ -8,6 +8,9 @@ import AddIPPage from "@/components/pages/add-ip-page";
 import ApprovalsPage from "@/components/pages/approvals-page";
 import VerifyIPPage from "@/components/pages/verify-ip-page";
 import SettingsPage from "@/components/pages/settings-page";
+import YouTubeImportPage from "@/components/pages/youtube-import-page";
+import LicenseVideoPage from "@/components/pages/license-video-page";
+import YouTubeLinkPage from "@/components/pages/youtube-link-page";
 import { AuthGuard } from "@/components/auth-guard";
 import { AuthDebug } from "@/components/auth-debug";
 
@@ -17,7 +20,10 @@ type PageType =
   | "add-ip"
   | "approvals"
   | "verify-ip"
-  | "settings";
+  | "settings"
+  | "youtube-import"
+  | "license-video"
+  | "youtube-link";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -88,6 +94,15 @@ export default function Home() {
             instagram={connectedInstagram}
             onNavigate={handleNavigate}
           />
+        )}
+        {currentPage === "youtube-import" && (
+          <YouTubeImportPage onNavigate={handleNavigate} />
+        )}
+        {currentPage === "license-video" && (
+          <LicenseVideoPage onNavigate={handleNavigate} />
+        )}
+        {currentPage === "youtube-link" && (
+          <YouTubeLinkPage onNavigate={handleNavigate} />
         )}
       </main>
     </AuthGuard>
