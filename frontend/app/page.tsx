@@ -26,7 +26,7 @@ type PageType =
   | "youtube-link";
 
 export default function Home() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [currentPage, setCurrentPage] = useState<PageType>("login");
   const [userEmail, setUserEmail] = useState("");
   const [connectedWallet, setConnectedWallet] = useState("");
