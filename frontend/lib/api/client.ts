@@ -95,9 +95,9 @@ class ApiClient {
   }
 
   // IP Assets endpoints
-  async getMyAssets(userId?: string) {
+  async getMyAssets(walletAddress?: string) {
     const response = await this.client.get("/ip-assets/my-assets", {
-      params: { userId },
+      params: { walletAddress },
     });
     return response.data;
   }
@@ -122,7 +122,7 @@ class ApiClient {
     contentHash?: string;
     audioFingerprint?: string;
     visualFingerprint?: string;
-    ownerId?: string; // Add ownerId to the type definition
+    ownerAddress?: string; // Add ownerAddress to the type definition
     collaborators?: {
       userId: string;
       walletAddress: string;
@@ -505,6 +505,97 @@ class ApiClient {
 
   async getDisputedIPs() {
     const response = await this.client.get("/ip-assets/disputed-ips");
+    return response.data;
+  }
+
+  // License Token Management
+  async mintLicenseTokens(data: {
+    assetId: string;
+    licenseTermsId: string;
+    receiver?: string;
+    amount?: number;
+    maxMintingFee?: string;
+    maxRevenueShare?: number;
+    licenseTokenIds?: string[];
+    transactionHash?: string;
+  }) {
+    const response = await this.client.post(
+      "/ip-assets/mint-license-tokens",
+      data
+    );
+    return response.data;
+  }
+
+  async getLicenseTerms(assetId: string) {
+    const response = await this.client.get(
+      `/ip-assets/${assetId}/license-terms`
+    );
+    return response.data;
+  }
+
+  // Derivative Registration
+  async registerDerivative(data: {
+    parentAssetId: string;
+    licenseTermsId: string;
+    derivativeData: {
+      title: string;
+      description: string;
+      sourceUrl: string;
+      thumbnailUrl: string;
+      owner: string;
+      collaborators?: Array<{
+        id: string;
+        name: string;
+        wallet: string;
+        ownership: number;
+        approval: boolean;
+      }>;
+    };
+    derivativeIpId?: string;
+    tokenId?: string;
+    transactionHash?: string;
+  }) {
+    const response = await this.client.post(
+      "/ip-assets/register-derivative",
+      data
+    );
+    return response.data;
+  }
+
+  // Revenue Sharing
+  async payRoyalty(data: {
+    assetId: string;
+    receiverIpId: string;
+    payerIpId?: string;
+    amount: string;
+    token?: string;
+    transactionHash?: string;
+  }) {
+    const response = await this.client.post("/ip-assets/pay-royalty", data);
+    return response.data;
+  }
+
+  // Claim Revenue
+  async claimRevenue(data: {
+    assetId: string;
+    ipId: string;
+    claimer: string;
+    claimedTokens: any;
+    transactionHash?: string;
+  }) {
+    const response = await this.client.post("/ip-assets/claim-revenue", data);
+    return response.data;
+  }
+
+  async getRevenueShare(assetId: string) {
+    const response = await this.client.get(
+      `/ip-assets/${assetId}/revenue-share`
+    );
+    return response.data;
+  }
+
+  async claimRevenue(data: { assetId: string; amount: string }) {
+    const response = await this.client.post("/ip-assets/claim-revenue", data);
     return response.data;
   }
 }

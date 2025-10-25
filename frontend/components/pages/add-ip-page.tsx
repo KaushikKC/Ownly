@@ -155,16 +155,19 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
         return;
       }
 
-      // Check if user has linked their YouTube channel
+      // Check if user has YouTube channel ID (either from database or manually set)
       if (!user?.youtubeChannelId) {
         setOwnershipStatus({
           isOwner: false,
           channelInfo: null,
           message:
-            "Please link your YouTube channel first. Go to Settings to link your YouTube channel.",
+            "YouTube channel ID not found. Please go to Settings and enter your YouTube channel ID to verify ownership.",
         });
         return;
       }
+
+      // Show that we're using the user's YouTube channel ID
+      console.log("Using YouTube channel ID:", user.youtubeChannelId);
 
       const response = await apiClient.verifyYouTubeOwnership(
         videoUrl,
@@ -204,7 +207,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
               sourceUrl: videoUrl,
               title: videoData?.title || title,
               thumbnailUrl: videoData?.thumbnailUrl || thumbnailUrl,
-              currentUserId: user?.id, // Pass current user ID for intelligent filtering
+              currentWalletAddress: user?.walletAddress, // Pass current user's wallet address for intelligent filtering
             };
 
             console.log("Checking violations with data:", violationData);
@@ -254,7 +257,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
         sourcePlatform: "youtube",
         thumbnailUrl,
         duration,
-        ownerId: user?.id, // Pass the current user's ID
+        ownerAddress: user?.walletAddress, // Pass the current user's wallet address
         collaborators:
           selectedCollaborators.length > 0
             ? selectedCollaborators.map((c) => ({
@@ -611,6 +614,25 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                               Channel ID:{" "}
                               {ownershipStatus.channelInfo.channelId}
                             </p>
+                          </div>
+                        )}
+
+                        {/* Show YouTube channel info */}
+                        {user?.youtubeChannelId && (
+                          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                            <div className="flex items-center text-xs text-green-700">
+                              <span className="mr-1">✅</span>
+                              <span className="font-medium">
+                                YouTube Channel Ready:
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs text-green-600">
+                              <p>Channel ID: {user.youtubeChannelId}</p>
+                              <p className="text-green-500">
+                                Your YouTube channel is set and ready for
+                                verification
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>

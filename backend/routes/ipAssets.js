@@ -8,18 +8,30 @@ const router = express.Router();
 // Get all IP assets for a user
 router.get("/my-assets", async (req, res) => {
   try {
-    const { userId } = req.query; // Get userId from query parameters
+    const { walletAddress } = req.query; // Get wallet address from query parameters
 
-    if (!userId) {
+    if (!walletAddress) {
       return res.status(400).json({
         success: false,
-        message: "User ID is required",
+        message: "Wallet address is required",
       });
     }
 
-    const assets = await IPAsset.find({ owner: userId })
-      .populate("owner", "name email profilePicture")
+    // Validate wallet address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid wallet address format. Expected Ethereum address.",
+        receivedWalletAddress: walletAddress,
+      });
+    }
+
+    const assets = await IPAsset.find({ owner: walletAddress })
       .populate("collaborators.userId", "name email walletAddress")
+      .populate(
+        "derivatives",
+        "title description storyProtocolAssetId nftTokenId status registeredAt license"
+      )
       .sort({ createdAt: -1 });
 
     res.json({ success: true, assets });
@@ -106,7 +118,8 @@ router.post("/", async (req, res) => {
       visualFingerprint,
       collaborators,
       license,
-      ownerId, // Get owner ID from request body
+      ownerAddress, // Get owner wallet address from request body
+      ownerId, // Legacy field for backward compatibility
       owner, // Alternative field name
     } = req.body;
 
@@ -127,9 +140,23 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const finalOwnerId =
-      ownerId || owner || req.user?.userId || "507f1f77bcf86cd799439011";
-    console.log("Final owner ID:", finalOwnerId);
+    const finalOwnerAddress =
+      ownerAddress ||
+      owner ||
+      ownerId ||
+      req.user?.userId ||
+      "0x0000000000000000000000000000000000000000";
+    console.log("Final owner address:", finalOwnerAddress);
+
+    // Validate wallet address format (basic Ethereum address validation)
+    if (finalOwnerAddress && !/^0x[a-fA-F0-9]{40}$/.test(finalOwnerAddress)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid owner address format. Expected Ethereum wallet address.",
+        receivedOwnerAddress: finalOwnerAddress,
+      });
+    }
 
     const asset = new IPAsset({
       title,
@@ -142,7 +169,7 @@ router.post("/", async (req, res) => {
       contentHash,
       audioFingerprint,
       visualFingerprint,
-      owner: finalOwnerId, // Use ownerId from request body
+      owner: finalOwnerAddress, // Use wallet address as owner
       collaborators: collaborators || [],
       license: license || {},
     });
@@ -264,13 +291,13 @@ router.post("/check-url", async (req, res) => {
 // Check for IP violations/duplicates
 router.post("/check-violations", async (req, res) => {
   try {
-    const { sourceUrl, title, thumbnailUrl, currentUserId } = req.body;
+    const { sourceUrl, title, thumbnailUrl, currentWalletAddress } = req.body;
 
     console.log("Checking violations for:", {
       sourceUrl,
       title,
       thumbnailUrl,
-      currentUserId,
+      currentWalletAddress,
     });
 
     // Check for exact URL matches (always a violation regardless of user)
@@ -366,9 +393,7 @@ router.post("/check-violations", async (req, res) => {
     const filteredTitleMatches = violations.titleMatches.filter((match) => {
       const similarity = match.similarity;
       const isSameUser =
-        currentUserId &&
-        match.owner &&
-        match.owner._id.toString() === currentUserId;
+        currentWalletAddress && match.owner === currentWalletAddress;
 
       // Flag if: same user OR very high similarity (95%+)
       // For legacy data without owner info, only flag if very high similarity (98%+)
@@ -384,9 +409,7 @@ router.post("/check-violations", async (req, res) => {
     const filteredThumbnailMatches = violations.thumbnailMatches.filter(
       (match) => {
         const isSameUser =
-          currentUserId &&
-          match.owner &&
-          match.owner._id.toString() === currentUserId;
+          currentWalletAddress && match.owner === currentWalletAddress;
         // Flag if: same user OR exact thumbnail match
         // For legacy data without owner info, only flag exact matches
         return isSameUser || match.similarity >= 1.0;
@@ -563,6 +586,376 @@ router.get("/:assetId/story-protocol", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to get Story Protocol data",
+      error: error.message,
+    });
+  }
+});
+
+// Mint License Tokens
+router.post("/mint-license-tokens", async (req, res) => {
+  try {
+    const {
+      assetId,
+      licenseTermsId,
+      receiver,
+      amount = 1,
+      maxMintingFee = "0",
+      maxRevenueShare = 100,
+    } = req.body;
+
+    const asset = await IPAsset.findById(assetId);
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    if (!asset.storyProtocolAssetId) {
+      return res.status(400).json({
+        success: false,
+        message: "Asset must be registered with Story Protocol first",
+      });
+    }
+
+    // Frontend handles Story Protocol calls, backend just stores the result
+    const { licenseTokenIds, transactionHash } = req.body;
+
+    // Update asset with license token information
+    const updatedAsset = await IPAsset.findByIdAndUpdate(
+      assetId,
+      {
+        $push: {
+          licenseTokens: {
+            licenseTermsId,
+            tokenIds: licenseTokenIds,
+            transactionHash,
+            mintedAt: new Date(),
+            amount: amount,
+            maxMintingFee: maxMintingFee,
+            maxRevenueShare: maxRevenueShare,
+          },
+        },
+      },
+      { new: true }
+    ).populate("owner", "name email profilePicture walletAddress");
+
+    res.json({
+      success: true,
+      asset: updatedAsset,
+    });
+  } catch (error) {
+    console.error("Mint license tokens error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to mint license tokens",
+      error: error.message,
+    });
+  }
+});
+
+// Get License Terms
+router.get("/:assetId/license-terms", async (req, res) => {
+  try {
+    const { assetId } = req.params;
+
+    const asset = await IPAsset.findById(assetId);
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    if (!asset.storyProtocolAssetId) {
+      return res.status(400).json({
+        success: false,
+        message: "Asset must be registered with Story Protocol first",
+      });
+    }
+
+    // Return license terms from asset data (frontend handles Story Protocol calls)
+    res.json({
+      success: true,
+      licenseTerms: asset.license || {},
+    });
+  } catch (error) {
+    console.error("Get license terms error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get license terms",
+      error: error.message,
+    });
+  }
+});
+
+// Register Derivative
+router.post("/register-derivative", async (req, res) => {
+  try {
+    const { parentAssetId, licenseTermsId, derivativeData } = req.body;
+
+    const parentAsset = await IPAsset.findById(parentAssetId);
+    if (!parentAsset) {
+      return res.status(404).json({
+        success: false,
+        message: "Parent asset not found",
+      });
+    }
+
+    if (!parentAsset.storyProtocolAssetId) {
+      return res.status(400).json({
+        success: false,
+        message: "Parent asset must be registered with Story Protocol first",
+      });
+    }
+
+    // Frontend handles Story Protocol calls, backend just stores the result
+    const { derivativeIpId, tokenId, transactionHash } = req.body;
+
+    // Create derivative asset in database
+    const derivativeAsset = new IPAsset({
+      title: derivativeData.title,
+      description: derivativeData.description,
+      sourceUrl: derivativeData.sourceUrl,
+      sourcePlatform: "other", // Default for derivatives
+      thumbnailUrl: derivativeData.thumbnailUrl,
+      owner: derivativeData.owner,
+      collaborators: derivativeData.collaborators || [],
+      parentAssetId: parentAssetId,
+      storyProtocolAssetId: derivativeIpId,
+      nftTokenId: tokenId,
+      nftContractAddress: "0xc32A8a0FF3beDDDa58393d022aF433e78739FAbc",
+      status: "registered",
+      registeredAt: new Date(),
+      license: {
+        type: "derivative",
+        royaltyPercentage: 10,
+        parentAssetId: parentAssetId,
+        licenseTermsId: licenseTermsId,
+      },
+    });
+
+    await derivativeAsset.save();
+
+    // Update parent asset to include this derivative
+    await IPAsset.findByIdAndUpdate(
+      parentAssetId,
+      {
+        $push: {
+          derivatives: derivativeAsset._id,
+        },
+      },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      derivativeAsset,
+    });
+  } catch (error) {
+    console.error("Register derivative error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to register derivative",
+      error: error.message,
+    });
+  }
+});
+
+// Pay Royalty
+router.post("/pay-royalty", async (req, res) => {
+  try {
+    const { assetId, receiverIpId, payerIpId, amount, token } = req.body;
+
+    const asset = await IPAsset.findById(assetId);
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    // Frontend handles Story Protocol calls, backend just stores the result
+    const { transactionHash } = req.body;
+
+    // Record royalty payment in database
+    const updatedAsset = await IPAsset.findByIdAndUpdate(
+      assetId,
+      {
+        $push: {
+          royaltyPayments: {
+            receiverIpId,
+            payerIpId: payerIpId || "External",
+            amount,
+            token: token || "WIP",
+            transactionHash,
+            paidAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      asset: updatedAsset,
+    });
+  } catch (error) {
+    console.error("Pay royalty error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to pay royalty",
+      error: error.message,
+    });
+  }
+});
+
+// Claim Revenue
+router.post("/claim-revenue", async (req, res) => {
+  try {
+    const { assetId, ipId, claimer, claimedTokens, transactionHash } = req.body;
+
+    const asset = await IPAsset.findById(assetId);
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    // Frontend handles Story Protocol calls, backend just stores the result
+    // Record revenue claim in database
+    const updatedAsset = await IPAsset.findByIdAndUpdate(
+      assetId,
+      {
+        $push: {
+          revenueClaims: {
+            ipId,
+            claimer,
+            claimedTokens,
+            transactionHash,
+            claimedAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      asset: updatedAsset,
+    });
+  } catch (error) {
+    console.error("Claim revenue error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to claim revenue",
+      error: error.message,
+    });
+  }
+});
+
+// Get Revenue Share
+router.get("/:assetId/revenue-share", async (req, res) => {
+  try {
+    const { assetId } = req.params;
+
+    const asset = await IPAsset.findById(assetId);
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    if (!asset.storyProtocolAssetId) {
+      return res.status(400).json({
+        success: false,
+        message: "Asset must be registered with Story Protocol first",
+      });
+    }
+
+    // Calculate revenue share from database (frontend handles Story Protocol calls)
+    const totalEarned =
+      asset.royaltyPayments?.reduce(
+        (sum, payment) => sum + parseFloat(payment.amount),
+        0
+      ) || 0;
+    const totalClaimed =
+      asset.revenueClaims?.reduce(
+        (sum, claim) => sum + parseFloat(claim.amount),
+        0
+      ) || 0;
+    const claimableAmount = totalEarned - totalClaimed;
+
+    res.json({
+      success: true,
+      revenueShare: {
+        totalEarned: totalEarned.toString(),
+        claimableAmount: claimableAmount.toString(),
+        parentShares: [],
+        childShares: [],
+      },
+    });
+  } catch (error) {
+    console.error("Get revenue share error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get revenue share",
+      error: error.message,
+    });
+  }
+});
+
+// Claim Revenue
+router.post("/claim-revenue", async (req, res) => {
+  try {
+    const { assetId, amount } = req.body;
+
+    const asset = await IPAsset.findById(assetId);
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    if (!asset.storyProtocolAssetId) {
+      return res.status(400).json({
+        success: false,
+        message: "Asset must be registered with Story Protocol first",
+      });
+    }
+
+    // This would typically involve calling a claim function on the royalty module
+    // For now, we'll simulate the claim process
+    const claimResult = {
+      success: true,
+      claimedAmount: amount,
+      transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+      claimedAt: new Date(),
+    };
+
+    // Record claim in database
+    await IPAsset.findByIdAndUpdate(assetId, {
+      $push: {
+        revenueClaims: {
+          amount,
+          transactionHash: claimResult.transactionHash,
+          claimedAt: claimResult.claimedAt,
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      result: claimResult,
+    });
+  } catch (error) {
+    console.error("Claim revenue error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to claim revenue",
       error: error.message,
     });
   }

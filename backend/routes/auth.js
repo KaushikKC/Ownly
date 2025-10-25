@@ -47,6 +47,7 @@ router.post("/register", async (req, res) => {
         name: user.name,
         profilePicture: user.profilePicture,
         walletAddress: user.walletAddress,
+        youtubeChannelId: user.youtubeChannelId,
       },
     });
   } catch (error) {

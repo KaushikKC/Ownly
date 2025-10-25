@@ -4,8 +4,13 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExternalLink, Copy, CheckCircle, AlertCircle } from "lucide-react";
 import apiClient from "@/lib/api/client";
+import LicenseManagementCard from "./license-management-card";
+import DerivativeRegistrationModal from "./derivative-registration-modal";
+import RevenueTrackingCard from "./revenue-tracking-card";
+import DerivativesList from "./derivatives-list";
 
 interface StoryProtocolCardProps {
   asset: {
@@ -88,6 +93,7 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
       <CardContent className="space-y-4">
         {asset.thumbnailUrl && (
           <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={asset.thumbnailUrl}
               alt={asset.title}
@@ -97,54 +103,38 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
         )}
 
         {asset.storyProtocolAssetId ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">
-                Registered on Story Protocol
-              </span>
-            </div>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="license">License</TabsTrigger>
+              <TabsTrigger value="derivative">Derivative</TabsTrigger>
+              <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Asset ID:</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs">
-                    {asset.storyProtocolAssetId}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      copyToClipboard(asset.storyProtocolAssetId!, "assetId")
-                    }
-                    className="h-6 w-6 p-0"
-                  >
-                    {copiedField === "assetId" ? (
-                      <CheckCircle className="w-3 h-3" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
-                </div>
+            <TabsContent value="overview" className="space-y-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-800">
+                  Registered on Story Protocol
+                </span>
               </div>
 
-              {asset.nftTokenId && (
+              <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">NFT Token ID:</span>
+                  <span className="text-muted-foreground">Asset ID:</span>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs">
-                      {asset.nftTokenId}
+                      {asset.storyProtocolAssetId}
                     </span>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() =>
-                        copyToClipboard(asset.nftTokenId!, "tokenId")
+                        copyToClipboard(asset.storyProtocolAssetId!, "assetId")
                       }
                       className="h-6 w-6 p-0"
                     >
-                      {copiedField === "tokenId" ? (
+                      {copiedField === "assetId" ? (
                         <CheckCircle className="w-3 h-3" />
                       ) : (
                         <Copy className="w-3 h-3" />
@@ -152,93 +142,149 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                     </Button>
                   </div>
                 </div>
-              )}
 
-              {asset.nftContractAddress && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Contract:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs">
-                      {asset.nftContractAddress.slice(0, 6)}...
-                      {asset.nftContractAddress.slice(-4)}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        copyToClipboard(asset.nftContractAddress!, "contract")
-                      }
-                      className="h-6 w-6 p-0"
-                    >
-                      {copiedField === "contract" ? (
-                        <CheckCircle className="w-3 h-3" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
+                {asset.nftTokenId && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">NFT Token ID:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs">
+                        {asset.nftTokenId}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          copyToClipboard(asset.nftTokenId!, "tokenId")
+                        }
+                        className="h-6 w-6 p-0"
+                      >
+                        {copiedField === "tokenId" ? (
+                          <CheckCircle className="w-3 h-3" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {asset.registeredAt && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Registered:</span>
-                  <span className="text-xs">
-                    {new Date(asset.registeredAt).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-            </div>
+                {asset.nftContractAddress && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Contract:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs">
+                        {asset.nftContractAddress.slice(0, 6)}...
+                        {asset.nftContractAddress.slice(-4)}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          copyToClipboard(asset.nftContractAddress!, "contract")
+                        }
+                        className="h-6 w-6 p-0"
+                      >
+                        {copiedField === "contract" ? (
+                          <CheckCircle className="w-3 h-3" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={loadStoryProtocolData}
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? "Loading..." : "View Details"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(asset.sourceUrl, "_blank")}
-                className="flex items-center gap-1"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Source
-              </Button>
-            </div>
-
-            {storyData && (
-              <div className="mt-4 p-3 bg-muted rounded-lg">
-                <h4 className="font-medium text-sm mb-2">
-                  Story Protocol Details
-                </h4>
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Asset ID:</span>
-                    <span className="font-mono">
-                      {storyData.storyProtocolAssetId}
+                {asset.registeredAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Registered:</span>
+                    <span className="text-xs">
+                      {new Date(asset.registeredAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status:</span>
-                    <span>{storyData.status}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">License Type:</span>
-                    <span>{storyData.license?.type}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Royalty:</span>
-                    <span>{storyData.license?.royaltyPercentage}%</span>
-                  </div>
-                </div>
+                )}
               </div>
-            )}
-          </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadStoryProtocolData}
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  {loading ? "Loading..." : "View Details"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(asset.sourceUrl, "_blank")}
+                  className="flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Source
+                </Button>
+              </div>
+
+              {storyData && (
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">
+                    Story Protocol Details
+                  </h4>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Asset ID:</span>
+                      <span className="font-mono">
+                        {storyData.storyProtocolAssetId}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Status:</span>
+                      <span>{storyData.status}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        License Type:
+                      </span>
+                      <span>{storyData.license?.type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Royalty:</span>
+                      <span>{storyData.license?.royaltyPercentage}%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="license">
+              <LicenseManagementCard asset={asset} />
+            </TabsContent>
+
+            <TabsContent value="derivative">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">
+                    Derivative Registration
+                  </h3>
+                  <DerivativeRegistrationModal
+                    parentAsset={asset}
+                    onSuccess={() => window.location.reload()}
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Register a derivative work based on this IP asset. This will
+                  create a new IP asset that references this one as its parent.
+                </div>
+
+                {/* Show existing derivatives */}
+                <DerivativesList asset={asset} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="revenue">
+              <RevenueTrackingCard asset={asset} />
+            </TabsContent>
+          </Tabs>
         ) : (
           <div className="flex items-center gap-2 text-muted-foreground">
             <AlertCircle className="w-4 h-4" />

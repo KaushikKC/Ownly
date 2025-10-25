@@ -39,6 +39,7 @@ interface UserContextType {
     preferences?: Record<string, unknown>;
   }) => Promise<void>;
   linkYouTubeChannel: (accessToken: string) => Promise<void>;
+  updateYouTubeChannelId: (channelId: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -64,25 +65,40 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   // Sync with backend when session or wallet changes
   useEffect(() => {
     const syncWithBackend = async () => {
-      if (session?.user && address) {
+      if (session?.user) {
         try {
-          // Register/update user in backend
+          // Register/update user in backend (with or without wallet)
           const response = await registerUser({
             email: session.user.email || "",
             name: session.user.name || "",
             profilePicture: session.user.image || undefined,
             googleId: session.user.id || undefined,
-            walletAddress: address,
+            walletAddress: address || undefined, // Include wallet if available
           });
 
           console.log("User synced with backend:", response);
+
+          // Check if user already has YouTube channel ID stored
+          if (
+            response.success &&
+            response.user &&
+            response.user.youtubeChannelId
+          ) {
+            console.log(
+              "✅ User already has YouTube channel ID:",
+              response.user.youtubeChannelId
+            );
+            // YouTube channel ID is already available, no manual entry needed
+          } else {
+            console.log("ℹ️ User needs to add YouTube channel ID in Settings");
+          }
         } catch (error) {
           console.error("Failed to sync with backend:", error);
         }
       }
     };
 
-    if (session?.user && address) {
+    if (session?.user) {
       syncWithBackend();
     }
   }, [session, address]);
@@ -245,6 +261,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Simple function to update YouTube channel ID in user profile
+  const updateYouTubeChannelId = async (channelId: string) => {
+    try {
+      const response = await updateProfile({ youtubeChannelId: channelId });
+      if (response.success) {
+        console.log("YouTube channel ID updated successfully");
+      }
+      return response;
+    } catch (error) {
+      console.error("Failed to update YouTube channel ID:", error);
+      throw error;
+    }
+  };
+
   const value = {
     user: backendUser || session?.user || null,
     walletAddress: address || null,
@@ -260,6 +290,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     registerUser,
     updateProfile,
     linkYouTubeChannel,
+    updateYouTubeChannelId,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

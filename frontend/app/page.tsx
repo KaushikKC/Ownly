@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useUser } from "@/lib/user-context";
 import LoginPage from "@/components/pages/login-page";
 import DashboardPage from "@/components/pages/dashboard-page";
 import AddIPPage from "@/components/pages/add-ip-page";
@@ -26,7 +27,8 @@ type PageType =
   | "youtube-link";
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
+  const { user } = useUser();
   const [currentPage, setCurrentPage] = useState<PageType>("login");
   const [userEmail, setUserEmail] = useState("");
   const [connectedWallet, setConnectedWallet] = useState("");
@@ -92,6 +94,7 @@ export default function Home() {
             wallet={connectedWallet}
             google={connectedGoogle}
             instagram={connectedInstagram}
+            youtubeChannelId={user?.youtubeChannelId || undefined}
             onNavigate={handleNavigate}
           />
         )}

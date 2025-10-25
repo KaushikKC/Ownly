@@ -2,12 +2,18 @@
 
 import { useSession } from "next-auth/react";
 import { useUser } from "@/lib/user-context";
+import { useState, useEffect } from "react";
 
 export function AuthDebug() {
-  const { data: session } = useSession();
+  const { status } = useSession();
   const { user, walletAddress, isConnected } = useUser();
+  const [mounted, setMounted] = useState(false);
 
-  if (process.env.NODE_ENV !== "development") {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (process.env.NODE_ENV !== "development" || !mounted) {
     return null;
   }
 
@@ -22,7 +28,8 @@ export function AuthDebug() {
         </div>
         <div>Connected: {isConnected ? "Yes" : "No"}</div>
         <div>
-          Google Client ID: {process.env.GOOGLE_CLIENT_ID ? "Set" : "Missing"}
+          Google Client ID:{" "}
+          {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? "Set" : "Missing"}
         </div>
         <div>
           WalletConnect ID:{" "}

@@ -92,8 +92,7 @@ const ipAssetSchema = new mongoose.Schema({
 
   // Ownership and collaboration
   owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    type: String, // Store wallet address as string
     required: true,
   },
   collaborators: [collaboratorSchema],
@@ -111,6 +110,106 @@ const ipAssetSchema = new mongoose.Schema({
   storyProtocolAssetId: {
     type: String,
   },
+
+  // License Tokens
+  licenseTokens: [
+    {
+      licenseTermsId: {
+        type: String,
+        required: true,
+      },
+      tokenIds: [
+        {
+          type: String,
+        },
+      ],
+      transactionHash: {
+        type: String,
+        required: true,
+      },
+      mintedAt: {
+        type: Date,
+        default: Date.now,
+      },
+      amount: {
+        type: Number,
+        default: 1,
+      },
+      maxMintingFee: {
+        type: String,
+      },
+      maxRevenueShare: {
+        type: Number,
+        default: 100,
+      },
+    },
+  ],
+
+  // Derivatives
+  parentAssetId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "IPAsset",
+  },
+  derivatives: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "IPAsset",
+    },
+  ],
+
+  // Revenue Tracking
+  royaltyPayments: [
+    {
+      receiverIpId: {
+        type: String,
+        required: true,
+      },
+      payerIpId: {
+        type: String,
+      },
+      amount: {
+        type: String,
+        required: true,
+      },
+      token: {
+        type: String,
+        default: "WIP",
+      },
+      transactionHash: {
+        type: String,
+        required: true,
+      },
+      paidAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
+
+  revenueClaims: [
+    {
+      ipId: {
+        type: String,
+        required: true,
+      },
+      claimer: {
+        type: String,
+        required: true,
+      },
+      claimedTokens: {
+        type: mongoose.Schema.Types.Mixed,
+        required: true,
+      },
+      transactionHash: {
+        type: String,
+        required: true,
+      },
+      claimedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 
   // Status
   status: {

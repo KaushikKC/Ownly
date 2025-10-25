@@ -25,11 +25,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token.sub) {
         session.user.id = token.sub;
       }
+      // Include access token in session for YouTube API calls
+      if (token.accessToken) {
+        session.accessToken = token.accessToken;
+      }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+      }
+      // Store access token from Google OAuth
+      if (account?.access_token) {
+        token.accessToken = account.access_token;
       }
       return token;
     },

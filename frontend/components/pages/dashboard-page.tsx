@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Bell, Plus, Menu, Youtube, LogOut } from "lucide-react";
+import { Bell, Plus, Menu, Youtube, LogOut, RefreshCw } from "lucide-react";
 import IPCard from "@/components/ip-card";
 import IPDetailModal from "@/components/ip-detail-modal";
 import StoryProtocolCard from "@/components/story-protocol-card";
@@ -154,24 +154,63 @@ export default function DashboardPage({
   const [userAssets, setUserAssets] = useState<UserAsset[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load user assets on component mount
-  useEffect(() => {
-    const loadUserAssets = async () => {
-      try {
-        setLoading(true);
-        const response = await apiClient.getMyAssets(user?.id);
-        if (response.success) {
-          setUserAssets(response.assets);
-        }
-      } catch (error) {
-        console.error("Failed to load user assets:", error);
-      } finally {
+  // Load user assets function
+  const loadUserAssets = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log("Dashboard - User object:", user);
+      console.log("Dashboard - Wallet address:", user?.walletAddress);
+      console.log(
+        "Dashboard - Wallet address type:",
+        typeof user?.walletAddress
+      );
+
+      // Check if wallet address is valid
+      const isValidWalletAddress =
+        user?.walletAddress && /^0x[a-fA-F0-9]{40}$/.test(user.walletAddress);
+      console.log("Dashboard - Is valid wallet address:", isValidWalletAddress);
+
+      if (!isValidWalletAddress) {
+        console.log("Dashboard - Invalid wallet address, skipping API call");
+        console.log(
+          "Dashboard - Please connect your wallet to view your IP assets"
+        );
         setLoading(false);
+        return;
+      }
+
+      const response = await apiClient.getMyAssets(
+        user?.walletAddress || undefined
+      );
+      if (response.success) {
+        setUserAssets(response.assets);
+        console.log("Dashboard - Loaded assets:", response.assets.length);
+      }
+    } catch (error) {
+      console.error("Failed to load user assets:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Load user assets on component mount and when wallet address changes
+  useEffect(() => {
+    loadUserAssets();
+  }, [loadUserAssets]);
+
+  // Reload assets when component becomes visible (user navigates back to dashboard)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user?.walletAddress) {
+        console.log("Dashboard - Page became visible, reloading assets");
+        loadUserAssets();
       }
     };
 
-    loadUserAssets();
-  }, []);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [user?.walletAddress, loadUserAssets]);
 
   const handleIPSelect = (ip: (typeof mockIPs)[0]) => {
     setSelectedIP(ip);
@@ -202,6 +241,13 @@ export default function DashboardPage({
               <h2 className="text-lg font-semibold text-foreground">My IPs</h2>
             </div>
             <div className="flex items-center gap-4">
+              <button
+                onClick={loadUserAssets}
+                className="p-2 hover:bg-muted rounded-lg relative"
+                title="Refresh assets"
+              >
+                <RefreshCw className="w-5 h-5 text-muted-foreground" />
+              </button>
               <button className="p-2 hover:bg-muted rounded-lg relative">
                 <Bell className="w-5 h-5 text-muted-foreground" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
