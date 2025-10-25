@@ -97,8 +97,8 @@ export default function VerifyIPPage({ onNavigate }: VerifyIPPageProps) {
             Check IP Registration Status
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Enter a media URL to check if it's already registered as an IP on
-            Story Protocol.
+            Enter a media URL to check if it&apos;s already registered as an IP
+            on Story Protocol.
           </p>
 
           <div className="space-y-4 mb-6">
@@ -192,6 +192,7 @@ export default function VerifyIPPage({ onNavigate }: VerifyIPPageProps) {
                           variant="outline"
                           size="sm"
                           onClick={() =>
+                            result.asset &&
                             handleCopy(result.asset.storyProtocolAssetId!)
                           }
                           className="p-1"
@@ -207,6 +208,7 @@ export default function VerifyIPPage({ onNavigate }: VerifyIPPageProps) {
                       variant="outline"
                       size="sm"
                       onClick={() =>
+                        result.asset &&
                         window.open(result.asset.sourceUrl, "_blank")
                       }
                       className="flex items-center gap-1"

@@ -63,7 +63,26 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
     "Allows commercial remixes with 10% rev share to original owner."
   );
   const [isRegistering, setIsRegistering] = useState(false);
-  const [violations, setViolations] = useState<any>(null);
+  const [violations, setViolations] = useState<{
+    urlMatch?: {
+      owner: { name: string };
+      registeredAt: string;
+      assetId: string;
+      storyProtocolAssetId: string;
+    };
+    titleMatches?: Array<{
+      title: string;
+      owner: { name: string };
+      assetId: string;
+      storyProtocolAssetId: string;
+    }>;
+    thumbnailMatches?: Array<{
+      title: string;
+      owner: { name: string };
+      assetId: string;
+      storyProtocolAssetId: string;
+    }>;
+  } | null>(null);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [storyProtocolData, setStoryProtocolData] = useState<{
@@ -285,14 +304,16 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
           );
 
           setStoryProtocolData({
-            assetId: storyResponse.storyProtocolAssetId,
-            nftTokenId: storyResponse.nftTokenId,
-            nftContractAddress: storyResponse.nftContractAddress,
-            licenseId: storyResponse.licenseId,
+            assetId: storyResponse.storyProtocolAssetId || "",
+            nftTokenId: storyResponse.nftTokenId || "",
+            nftContractAddress: storyResponse.nftContractAddress || "",
+            licenseId: storyResponse.licenseId
+              ? String(storyResponse.licenseId)
+              : "",
             transactionHashes: {
-              registration: storyResponse.transactionHash,
+              registration: storyResponse.transactionHash || "",
             },
-            ipfsHash: storyResponse.ipfsHash,
+            ipfsHash: storyResponse.ipfsHash || "",
           });
           setRegistrationComplete(true);
         }
@@ -608,8 +629,10 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                       if (
                         violations &&
                         (violations.urlMatch ||
-                          violations.titleMatches.length > 0 ||
-                          violations.thumbnailMatches.length > 0)
+                          (violations.titleMatches &&
+                            violations.titleMatches.length > 0) ||
+                          (violations.thumbnailMatches &&
+                            violations.thumbnailMatches.length > 0))
                       ) {
                         setShowDisputeModal(true);
                       } else {
@@ -618,18 +641,24 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                     }}
                     disabled={
                       !ownershipStatus?.isOwner ||
-                      (violations &&
+                      !!(
+                        violations &&
                         (violations.urlMatch ||
-                          violations.titleMatches.length > 0 ||
-                          violations.thumbnailMatches.length > 0))
+                          (violations.titleMatches &&
+                            violations.titleMatches.length > 0) ||
+                          (violations.thumbnailMatches &&
+                            violations.thumbnailMatches.length > 0))
+                      )
                     }
                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {ownershipStatus?.isOwner
                       ? violations &&
                         (violations.urlMatch ||
-                          violations.titleMatches.length > 0 ||
-                          violations.thumbnailMatches.length > 0)
+                          (violations.titleMatches &&
+                            violations.titleMatches.length > 0) ||
+                          (violations.thumbnailMatches &&
+                            violations.thumbnailMatches.length > 0))
                         ? "⚠️ Duplicate Detected - Cannot Proceed"
                         : "Next: Ownership Setup"
                       : "Verify Ownership First"}
@@ -920,33 +949,33 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                 </div>
               )}
 
-              {violations.titleMatches.length > 0 && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="font-medium text-yellow-800">
-                    Similar Titles Found:
-                  </p>
-                  {violations.titleMatches.map((match: any, index: number) => (
-                    <div key={index} className="text-sm text-yellow-700">
-                      • "{match.title}" by {match.owner.name}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {violations.titleMatches &&
+                violations.titleMatches.length > 0 && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="font-medium text-yellow-800">
+                      Similar Titles Found:
+                    </p>
+                    {violations.titleMatches.map((match, index: number) => (
+                      <div key={index} className="text-sm text-yellow-700">
+                        • &quot;{match.title}&quot; by {match.owner.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {violations.thumbnailMatches.length > 0 && (
-                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="font-medium text-orange-800">
-                    Similar Thumbnails Found:
-                  </p>
-                  {violations.thumbnailMatches.map(
-                    (match: any, index: number) => (
+              {violations.thumbnailMatches &&
+                violations.thumbnailMatches.length > 0 && (
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p className="font-medium text-orange-800">
+                      Similar Thumbnails Found:
+                    </p>
+                    {violations.thumbnailMatches.map((match, index: number) => (
                       <div key={index} className="text-sm text-orange-700">
                         • &quot;{match.title}&quot; by {match.owner.name}
                       </div>
-                    )
-                  )}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
             </div>
 
             <div className="flex gap-3">
@@ -981,7 +1010,8 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                     // Get the IP ID from the violation
                     const ipId =
                       violations.urlMatch?.storyProtocolAssetId ||
-                      violations.titleMatches[0]?.storyProtocolAssetId;
+                      (violations.titleMatches &&
+                        violations.titleMatches[0]?.storyProtocolAssetId);
 
                     if (!ipId) {
                       alert(
@@ -1023,13 +1053,13 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                       await apiClient.recordDispute({
                         assetId:
                           violations.urlMatch?.assetId ||
-                          violations.titleMatches[0]?.assetId,
+                          (violations.titleMatches &&
+                            violations.titleMatches[0]?.assetId) ||
+                          "",
                         disputeReason: "Duplicate IP claim",
                         claimantAddress:
                           user?.walletAddress ||
                           "0x0000000000000000000000000000000000000000",
-                        storyProtocolDisputeId: disputeResponse.disputeId,
-                        transactionHash: disputeResponse.transactionHash,
                       });
 
                       setShowDisputeModal(false);

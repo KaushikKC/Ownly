@@ -8,11 +8,56 @@ import { parseEther } from "viem";
 import { client } from "./storyUtils";
 import { uploadJSONToIPFS } from "./uploadToIpfs";
 
+interface VideoData {
+  title: string;
+  description: string;
+  sourceUrl: string;
+  thumbnailUrl: string;
+  duration: number;
+  owner: string;
+  collaborators: Array<{
+    id: string;
+    name: string;
+    wallet: string;
+    ownership: number;
+    approval: boolean;
+  }>;
+  license: {
+    type: string;
+    royaltyPercentage: number;
+    mintingFee: string;
+    duration: string;
+    commercialUse: boolean;
+    attributionRequired: boolean;
+    exclusivity: string;
+  };
+}
+
+interface DisputeData extends Record<string, unknown> {
+  reason: string;
+  claimantAddress: string;
+  originalUrl: string;
+  originalTitle: string;
+  timestamp: string;
+  evidence: string;
+}
+
+interface StoryProtocolData {
+  success: boolean;
+  storyProtocolAssetId?: string;
+  nftTokenId?: string;
+  nftContractAddress: string;
+  licenseId?: string | bigint;
+  transactionHash?: string;
+  ipfsHash: string;
+  explorerUrl: string;
+}
+
 class StoryProtocolService {
   /**
    * Create IP metadata following IPA Metadata Standard
    */
-  createIPMetadata(videoData: any) {
+  createIPMetadata(videoData: VideoData) {
     return {
       title: videoData.title,
       description: videoData.description,
@@ -34,11 +79,11 @@ class StoryProtocolService {
             },
           ],
         },
-        ...(videoData.collaborators || []).map((collab: any) => ({
-          name: collab.name || collab.walletAddress,
-          address: collab.walletAddress,
+        ...(videoData.collaborators || []).map((collab) => ({
+          name: collab.name || collab.wallet,
+          address: collab.wallet,
           description: "Collaborator",
-          contributionPercent: collab.ownershipPercentage,
+          contributionPercent: collab.ownership,
         })),
       ],
     };
@@ -47,7 +92,7 @@ class StoryProtocolService {
   /**
    * Create NFT metadata following ERC-721 standard
    */
-  createNFTMetadata(videoData: any) {
+  createNFTMetadata(videoData: VideoData) {
     return {
       name: `IP Asset: ${videoData.title}`,
       description: `NFT representing ownership of ${videoData.title} on Story Protocol`,
@@ -65,7 +110,7 @@ class StoryProtocolService {
   /**
    * Register IP Asset with Story Protocol (Frontend)
    */
-  async registerIPAsset(videoData: any) {
+  async registerIPAsset(videoData: VideoData) {
     try {
       console.log("Starting Story Protocol registration for:", videoData.title);
 
@@ -145,7 +190,7 @@ class StoryProtocolService {
         storyProtocolAssetId: response.ipId,
         nftTokenId: response.ipId,
         nftContractAddress: "0xc32A8a0FF3beDDDa58393d022aF433e78739FAbc",
-        licenseId: response.licenseTermsId,
+        licenseId: response.licenseTermsIds?.[0] || "",
         transactionHash: response.txHash,
         ipfsHash: ipIpfsHash,
         explorerUrl: `https://aeneid.explorer.story.foundation/ipa/${response.ipId}`,
@@ -159,7 +204,7 @@ class StoryProtocolService {
   /**
    * Generate a unique IPFS CID for dispute evidence
    */
-  async generateDisputeCID(disputeData: any): Promise<string> {
+  async generateDisputeCID(disputeData: DisputeData): Promise<string> {
     try {
       // Upload the dispute evidence to IPFS to get a real CID
       const cid = await uploadJSONToIPFS(disputeData);
@@ -200,7 +245,7 @@ class StoryProtocolService {
 
       // Record dispute on-chain using Story Protocol SDK
       const disputeResponse = await client.dispute.raiseDispute({
-        targetIpId: ipId,
+        targetIpId: ipId as `0x${string}`,
         cid: evidenceCid, // IPFS CID for dispute evidence
         targetTag: DisputeTargetTag.IMPROPER_REGISTRATION, // Whitelisted dispute tag
         bond: parseEther("0.1"), // Minimum bond of 0.1 tokens
@@ -224,7 +269,7 @@ class StoryProtocolService {
   /**
    * Save Story Protocol data to backend
    */
-  async saveToBackend(assetId: string, storyProtocolData: any) {
+  async saveToBackend(assetId: string, storyProtocolData: StoryProtocolData) {
     try {
       const response = await fetch(
         "http://localhost:5000/api/ip-assets/save-story-protocol",

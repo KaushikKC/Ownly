@@ -23,7 +23,17 @@ interface StoryProtocolCardProps {
 
 export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [storyData, setStoryData] = useState<any>(null);
+  const [storyData, setStoryData] = useState<{
+    assetId: string;
+    nftTokenId: string;
+    nftContractAddress: string;
+    licenseId: string;
+    transactionHashes: { registration: string };
+    ipfsHash: string;
+    storyProtocolAssetId: string;
+    status: string;
+    license: { type: string; royaltyPercentage?: number };
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const copyToClipboard = async (text: string, field: string) => {
