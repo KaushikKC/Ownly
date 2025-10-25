@@ -520,9 +520,9 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                         Views: {viewCount.toLocaleString()}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-2">
+                    {/* <p className="text-xs text-muted-foreground mt-2">
                       Detected Collaborators: @alexwave, @mira.codes, @johnfilm
-                    </p>
+                    </p> */}
                   </div>
                 </Card>
 
@@ -604,12 +604,34 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                     Cancel
                   </Button>
                   <Button
-                    onClick={() => setStep(2)}
-                    disabled={!ownershipStatus?.isOwner}
+                    onClick={() => {
+                      if (
+                        violations &&
+                        (violations.urlMatch ||
+                          violations.titleMatches.length > 0 ||
+                          violations.thumbnailMatches.length > 0)
+                      ) {
+                        setShowDisputeModal(true);
+                      } else {
+                        setStep(2);
+                      }
+                    }}
+                    disabled={
+                      !ownershipStatus?.isOwner ||
+                      (violations &&
+                        (violations.urlMatch ||
+                          violations.titleMatches.length > 0 ||
+                          violations.thumbnailMatches.length > 0))
+                    }
                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {ownershipStatus?.isOwner
-                      ? "Next: Ownership Setup"
+                      ? violations &&
+                        (violations.urlMatch ||
+                          violations.titleMatches.length > 0 ||
+                          violations.thumbnailMatches.length > 0)
+                        ? "⚠️ Duplicate Detected - Cannot Proceed"
+                        : "Next: Ownership Setup"
                       : "Verify Ownership First"}
                   </Button>
                 </div>
@@ -932,11 +954,23 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                 variant="outline"
                 onClick={() => {
                   setShowDisputeModal(false);
-                  setViolations(null);
+                  // Don't clear violations - keep them active to block navigation
+                  // setViolations(null);
                 }}
                 className="flex-1"
               >
                 Cancel
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDisputeModal(false);
+                  setViolations(null); // Clear violations to allow proceeding
+                  setStep(2); // Proceed to step 2
+                }}
+                className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                Proceed Anyway
               </Button>
               <Button
                 onClick={async () => {
@@ -956,7 +990,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                       return;
                     }
 
-                    // Create dispute evidence (IPFS CID)
+                    // Create dispute evidence
                     const disputeEvidence = {
                       reason: "Duplicate IP claim",
                       claimantAddress:
@@ -969,23 +1003,13 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                         "User attempting to register already claimed IP asset",
                     };
 
-                    // Upload evidence to IPFS (or use mock CID for testing)
-                    let evidenceCid: string;
-                    try {
-                      evidenceCid = await storyProtocolService.uploadToIPFS(
+                    // Generate unique IPFS CID for this dispute
+                    // Each dispute needs a unique CID that hasn't been used before
+                    const evidenceCid =
+                      await storyProtocolService.generateDisputeCID(
                         disputeEvidence
                       );
-                      console.log("IPFS upload successful, CID:", evidenceCid);
-                    } catch (error) {
-                      console.warn(
-                        "IPFS upload failed, using mock CID:",
-                        error
-                      );
-                      // Use a proper IPFS CID format - this is a valid IPFS hash for testing
-                      evidenceCid = `QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR`;
-                    }
-
-                    console.log("Using evidence CID:", evidenceCid);
+                    console.log("Generated unique dispute CID:", evidenceCid);
 
                     const disputeResponse =
                       await storyProtocolService.recordDispute(

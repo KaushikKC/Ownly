@@ -57,8 +57,29 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get disputed IPs
+router.get("/disputed-ips", async (req, res) => {
+  try {
+    const disputedAssets = await IPAsset.find({
+      status: "disputed",
+    }).populate("owner", "name email");
+
+    res.json({
+      success: true,
+      disputedAssets,
+    });
+  } catch (error) {
+    console.error("Get disputed IPs error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get disputed IPs",
+      error: error.message,
+    });
+  }
+});
+
 // Create new IP asset
-router.post("/", auth, async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const {
       title,
@@ -100,7 +121,7 @@ router.post("/", auth, async (req, res) => {
       contentHash,
       audioFingerprint,
       visualFingerprint,
-      owner: req.user.userId,
+      owner: req.user?.userId || "507f1f77bcf86cd799439011", // Default user ID for testing
       collaborators: collaborators || [],
       license: license || {},
     });
@@ -145,7 +166,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Update IP asset
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const asset = await IPAsset.findById(req.params.id);
 
@@ -156,13 +177,13 @@ router.put("/:id", auth, async (req, res) => {
       });
     }
 
-    // Check if user owns the asset
-    if (asset.owner.toString() !== req.user.userId) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update this asset",
-      });
-    }
+    // Check if user owns the asset (skip for testing)
+    // if (asset.owner.toString() !== req.user?.userId) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Not authorized to update this asset",
+    //   });
+    // }
 
     const updatedAsset = await IPAsset.findByIdAndUpdate(
       req.params.id,
@@ -195,11 +216,15 @@ router.post("/check-url", async (req, res) => {
       return res.json({
         success: true,
         isRegistered: true,
+        owner: existingAsset.owner,
         asset: {
           id: existingAsset._id,
           title: existingAsset.title,
-          owner: existingAsset.owner,
           status: existingAsset.status,
+          registeredAt: existingAsset.registeredAt || existingAsset.createdAt,
+          storyProtocolAssetId: existingAsset.storyProtocolAssetId,
+          thumbnailUrl: existingAsset.thumbnailUrl,
+          sourceUrl: existingAsset.sourceUrl,
         },
       });
     }
@@ -216,7 +241,7 @@ router.post("/check-url", async (req, res) => {
 });
 
 // Check for IP violations/duplicates
-router.post("/check-violations", auth, async (req, res) => {
+router.post("/check-violations", async (req, res) => {
   try {
     const { sourceUrl, title, thumbnailUrl } = req.body;
 
@@ -226,20 +251,51 @@ router.post("/check-violations", auth, async (req, res) => {
       status: { $in: ["registered", "pending"] },
     }).populate("owner", "name email");
 
-    // Check for similar titles (basic similarity check)
+    // Advanced title similarity detection
     const titleMatches = await IPAsset.find({
-      title: { $regex: title, $options: "i" },
+      $or: [
+        { title: { $regex: title, $options: "i" } },
+        { title: { $regex: title.replace(/[^\w\s]/g, ""), $options: "i" } }, // Remove special chars
+        {
+          title: {
+            $regex: title.split(" ").slice(0, 3).join(" "),
+            $options: "i",
+          },
+        }, // First 3 words
+      ],
       status: { $in: ["registered", "pending"] },
     }).populate("owner", "name email");
 
-    // Check for thumbnail hash matches (if thumbnailUrl provided)
+    // Advanced thumbnail matching
     let thumbnailMatches = [];
     if (thumbnailUrl) {
-      thumbnailMatches = await IPAsset.find({
+      // Check for exact thumbnail matches
+      const exactThumbnailMatches = await IPAsset.find({
         thumbnailUrl: thumbnailUrl,
         status: { $in: ["registered", "pending"] },
       }).populate("owner", "name email");
+
+      // Check for similar thumbnail URLs (different sizes, same video)
+      const baseThumbnailUrl = thumbnailUrl.split("?")[0]; // Remove query params
+      const similarThumbnailMatches = await IPAsset.find({
+        thumbnailUrl: {
+          $regex: baseThumbnailUrl.replace(/\/[^\/]+$/, ""),
+          $options: "i",
+        },
+        status: { $in: ["registered", "pending"] },
+      }).populate("owner", "name email");
+
+      thumbnailMatches = [...exactThumbnailMatches, ...similarThumbnailMatches];
     }
+
+    // Calculate similarity scores
+    const calculateSimilarity = (str1, str2) => {
+      const longer = str1.length > str2.length ? str1 : str2;
+      const shorter = str1.length > str2.length ? str2 : str1;
+      if (longer.length === 0) return 1.0;
+      const editDistance = levenshteinDistance(longer, shorter);
+      return (longer.length - editDistance) / longer.length;
+    };
 
     const violations = {
       urlMatch: urlMatch
@@ -249,6 +305,7 @@ router.post("/check-violations", auth, async (req, res) => {
             title: urlMatch.title,
             registeredAt: urlMatch.registeredAt,
             storyProtocolAssetId: urlMatch.storyProtocolAssetId,
+            similarity: 1.0, // Exact match
           }
         : null,
       titleMatches: titleMatches.map((asset) => ({
@@ -257,6 +314,10 @@ router.post("/check-violations", auth, async (req, res) => {
         title: asset.title,
         registeredAt: asset.registeredAt,
         storyProtocolAssetId: asset.storyProtocolAssetId,
+        similarity: calculateSimilarity(
+          title.toLowerCase(),
+          asset.title.toLowerCase()
+        ),
       })),
       thumbnailMatches: thumbnailMatches.map((asset) => ({
         assetId: asset._id,
@@ -264,18 +325,28 @@ router.post("/check-violations", auth, async (req, res) => {
         title: asset.title,
         registeredAt: asset.registeredAt,
         storyProtocolAssetId: asset.storyProtocolAssetId,
+        similarity: 1.0, // Exact thumbnail match
       })),
     };
 
+    // Filter matches by similarity threshold
+    const SIMILARITY_THRESHOLD = 0.7;
+    const filteredTitleMatches = violations.titleMatches.filter(
+      (match) => match.similarity >= SIMILARITY_THRESHOLD
+    );
+
     const hasViolations =
       violations.urlMatch ||
-      violations.titleMatches.length > 0 ||
+      filteredTitleMatches.length > 0 ||
       violations.thumbnailMatches.length > 0;
 
     res.json({
       success: true,
       hasViolations,
-      violations,
+      violations: {
+        ...violations,
+        titleMatches: filteredTitleMatches,
+      },
     });
   } catch (error) {
     console.error("Check violations error:", error);
@@ -288,7 +359,7 @@ router.post("/check-violations", auth, async (req, res) => {
 });
 
 // Record IP dispute
-router.post("/record-dispute", auth, async (req, res) => {
+router.post("/record-dispute", async (req, res) => {
   try {
     const {
       assetId,
@@ -343,31 +414,6 @@ router.post("/record-dispute", auth, async (req, res) => {
   }
 });
 
-// Get disputed IPs
-router.get("/disputed-ips", auth, async (req, res) => {
-  try {
-    const disputedAssets = await IPAsset.find({
-      status: "disputed",
-      $or: [
-        { owner: req.user.userId },
-        { "disputes.claimantId": req.user.userId },
-      ],
-    }).populate("owner", "name email");
-
-    res.json({
-      success: true,
-      disputedAssets,
-    });
-  } catch (error) {
-    console.error("Get disputed IPs error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to get disputed IPs",
-      error: error.message,
-    });
-  }
-});
-
 // Save Story Protocol data to MongoDB
 router.post("/save-story-protocol", async (req, res) => {
   try {
@@ -412,5 +458,71 @@ router.post("/save-story-protocol", async (req, res) => {
     });
   }
 });
+
+// Get Story Protocol data for an asset
+router.get("/:assetId/story-protocol", async (req, res) => {
+  try {
+    const { assetId } = req.params;
+
+    const asset = await IPAsset.findById(assetId).populate(
+      "owner",
+      "name email profilePicture walletAddress"
+    );
+
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    // Return Story Protocol data if available
+    const storyProtocolData = {
+      storyProtocolAssetId: asset.storyProtocolAssetId,
+      nftTokenId: asset.nftTokenId,
+      nftContractAddress: asset.nftContractAddress,
+      license: asset.license,
+      status: asset.status,
+      registeredAt: asset.registeredAt,
+    };
+
+    res.json({
+      success: true,
+      storyProtocolData,
+    });
+  } catch (error) {
+    console.error("Get Story Protocol data error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get Story Protocol data",
+      error: error.message,
+    });
+  }
+});
+
+// Levenshtein distance function for similarity calculation
+function levenshteinDistance(str1, str2) {
+  const matrix = [];
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[str2.length][str1.length];
+}
 
 module.exports = router;

@@ -43,7 +43,7 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
       setLoading(true);
       const response = await apiClient.getStoryProtocolData(asset._id);
       if (response.success) {
-        setStoryData(response.storyProtocol);
+        setStoryData(response.storyProtocolData);
       }
     } catch (error) {
       console.error("Failed to load Story Protocol data:", error);
@@ -208,15 +208,23 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                 </h4>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">License ID:</span>
-                    <span className="font-mono">{storyData.licenseId}</span>
+                    <span className="text-muted-foreground">Asset ID:</span>
+                    <span className="font-mono">
+                      {storyData.storyProtocolAssetId}
+                    </span>
                   </div>
-                  {storyData.assetData && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Status:</span>
-                      <span>{storyData.assetData.status}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status:</span>
+                    <span>{storyData.status}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">License Type:</span>
+                    <span>{storyData.license?.type}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Royalty:</span>
+                    <span>{storyData.license?.royaltyPercentage}%</span>
+                  </div>
                 </div>
               </div>
             )}

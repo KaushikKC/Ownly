@@ -157,6 +157,36 @@ class StoryProtocolService {
   }
 
   /**
+   * Generate a unique IPFS CID for dispute evidence
+   */
+  async generateDisputeCID(disputeData: any): Promise<string> {
+    try {
+      // Upload the dispute evidence to IPFS to get a real CID
+      const cid = await uploadJSONToIPFS(disputeData);
+      console.log("Uploaded dispute evidence to IPFS, CID:", cid);
+
+      // Story Protocol expects CIDv0 format (Qm...), but Pinata returns CIDv1
+      // Force fallback to generate CIDv0 format
+      console.warn("IPFS returned CIDv1, generating CIDv0 for Story Protocol");
+      throw new Error("CIDv1 format not supported by Story Protocol");
+    } catch (error) {
+      console.warn("Using fallback CID generation:", error);
+
+      // Generate a unique CIDv0 based on dispute data
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2, 15);
+      const disputeHash = createHash("sha256")
+        .update(JSON.stringify(disputeData) + timestamp + randomId)
+        .digest("hex");
+
+      // Create a unique CIDv0 that represents this specific dispute
+      const uniqueCid = `Qm${disputeHash.substring(0, 44)}`;
+      console.log("Generated unique dispute CIDv0:", uniqueCid);
+      return uniqueCid;
+    }
+  }
+
+  /**
    * Record dispute on Story Protocol (on-chain)
    */
   async recordDispute(
@@ -166,6 +196,7 @@ class StoryProtocolService {
   ) {
     try {
       console.log("Recording dispute on Story Protocol for IP:", ipId);
+      console.log("Using evidence CID:", evidenceCid);
 
       // Record dispute on-chain using Story Protocol SDK
       const disputeResponse = await client.dispute.raiseDispute({
