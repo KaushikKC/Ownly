@@ -21,6 +21,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import apiClient from "@/lib/api/client";
+import { WIP_TOKEN_ADDRESS } from "@story-protocol/core-sdk";
 
 interface RevenueTrackingCardProps {
   asset: {
@@ -47,7 +48,12 @@ export default function RevenueTrackingCard({
   asset,
 }: RevenueTrackingCardProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [revenueShare, setRevenueShare] = useState<any>(null);
+  const [revenueShare, setRevenueShare] = useState<{
+    totalRevenue: number;
+    claimedRevenue: number;
+    pendingRevenue: number;
+    revenueShare: number;
+  } | null>(null);
   const [claimForm, setClaimForm] = useState({
     amount: "",
   });
@@ -55,7 +61,7 @@ export default function RevenueTrackingCard({
     receiverIpId: asset.storyProtocolAssetId || "",
     payerIpId: "",
     amount: "",
-    token: "WIP",
+    token: String(WIP_TOKEN_ADDRESS),
   });
   const [loading, setLoading] = useState(false);
 
@@ -88,9 +94,41 @@ export default function RevenueTrackingCard({
 
     try {
       setLoading(true);
+
+      // Import Story Protocol service
+      const StoryProtocolService = (await import("@/lib/storyProtocol"))
+        .default;
+      const storyProtocolService = new StoryProtocolService();
+
+      // Call Story Protocol directly from frontend
+      const result = await storyProtocolService.claimAllRevenue(
+        asset.storyProtocolAssetId || "",
+        asset.storyProtocolAssetId || "", // claimer is the same as the IP owner
+        [], // childIpIds - empty for direct claims
+        [] // royaltyPolicies - empty for direct claims
+      );
+
+      // Serialize BigInt values before sending to backend
+      const serializedClaimedTokens = result.claimedTokens
+        ? Object.fromEntries(
+            Object.entries(result.claimedTokens).map(([key, value]) => [
+              key,
+              typeof value === "bigint"
+                ? (value as bigint).toString()
+                : typeof value === "object"
+                ? JSON.stringify(value)
+                : String(value),
+            ])
+          )
+        : {};
+
+      // Send result to backend to store in database
       const response = await apiClient.claimRevenue({
         assetId: asset._id,
-        amount: claimForm.amount,
+        ipId: asset.storyProtocolAssetId || "",
+        claimer: asset.storyProtocolAssetId || "",
+        claimedTokens: serializedClaimedTokens,
+        transactionHash: result.transactionHash,
       });
 
       if (response.success) {
@@ -114,12 +152,27 @@ export default function RevenueTrackingCard({
 
     try {
       setLoading(true);
+
+      // Import Story Protocol service
+      const StoryProtocolService = (await import("@/lib/storyProtocol"))
+        .default;
+      const storyProtocolService = new StoryProtocolService();
+
+      // Call Story Protocol directly from frontend
+      const result = await storyProtocolService.payRoyalty(
+        payForm.receiverIpId,
+        payForm.amount,
+        payForm.token
+      );
+
+      // Send result to backend to store in database
       const response = await apiClient.payRoyalty({
         assetId: asset._id,
         receiverIpId: payForm.receiverIpId,
         payerIpId: payForm.payerIpId || undefined,
         amount: payForm.amount,
         token: payForm.token,
+        transactionHash: result.transactionHash,
       });
 
       if (response.success) {
@@ -128,7 +181,7 @@ export default function RevenueTrackingCard({
           receiverIpId: asset.storyProtocolAssetId || "",
           payerIpId: "",
           amount: "",
-          token: "WIP",
+          token: String(WIP_TOKEN_ADDRESS),
         });
         loadRevenueShare();
       }
@@ -251,7 +304,10 @@ export default function RevenueTrackingCard({
                         </span>
                         <div className="ml-4 space-y-1">
                           {revenueShare.parentShares.map(
-                            (share: any, index: number) => (
+                            (
+                              share: { ipId: string; revenueShare: number },
+                              index: number
+                            ) => (
                               <div
                                 key={index}
                                 className="flex justify-between text-xs"
@@ -473,9 +529,10 @@ export default function RevenueTrackingCard({
                       }
                       className="w-full px-3 py-2 border border-input bg-background rounded-md"
                     >
-                      <option value="WIP">WIP</option>
-                      <option value="USDC">USDC</option>
-                      <option value="USDT">USDT</option>
+                      <option value={String(WIP_TOKEN_ADDRESS)}>WIP</option>
+                      <option value="0x1514000000000000000000000000000000000000">
+                        WIP (Testnet)
+                      </option>
                     </select>
                   </div>
                 </div>

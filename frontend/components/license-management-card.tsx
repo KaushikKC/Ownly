@@ -68,8 +68,18 @@ export default function LicenseManagementCard({
 }: LicenseManagementCardProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [mintLoading, setMintLoading] = useState(false);
-  const [licenseTerms, setLicenseTerms] = useState<any>(null);
-  const [revenueShare, setRevenueShare] = useState<any>(null);
+  const [licenseTerms, setLicenseTerms] = useState<{
+    licenseTermsId: string;
+    terms: string;
+    commercialUse: boolean;
+    attributionRequired: boolean;
+    royaltyPercentage: number;
+  } | null>(null);
+  const [revenueShare, setRevenueShare] = useState<{
+    totalRevenue: number;
+    claimedRevenue: number;
+    pendingRevenue: number;
+  } | null>(null);
   const [mintForm, setMintForm] = useState({
     licenseTermsId: "",
     receiver: "",
@@ -120,7 +130,7 @@ export default function LicenseManagementCard({
 
       // Convert BigInt values to strings for API serialization
       const serializedLicenseTokenIds =
-        result.licenseTokenIds?.map((id: any) =>
+        result.licenseTokenIds?.map((id: string | bigint) =>
           typeof id === "bigint" ? id.toString() : id
         ) || [];
 
@@ -316,7 +326,7 @@ export default function LicenseManagementCard({
                             Tokens: {token.tokenIds?.join(", ") || "No tokens"}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Amount: {token.amount} tokens
+                            Amount: {token.tokenIds?.length || 0} tokens
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Minted:{" "}

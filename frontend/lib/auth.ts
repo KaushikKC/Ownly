@@ -2,6 +2,12 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import InstagramProvider from "next-auth/providers/instagram";
 
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+  }
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     GoogleProvider({
@@ -26,7 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub;
       }
       // Include access token in session for YouTube API calls
-      if (token.accessToken) {
+      if (token.accessToken && typeof token.accessToken === "string") {
         session.accessToken = token.accessToken;
       }
       return session;

@@ -283,7 +283,7 @@ class StoryProtocolService {
       console.log("Amount:", amount);
 
       const response = await client.license.mintLicenseTokens({
-        licenseTermsId: licenseTermsId as any,
+        licenseTermsId: licenseTermsId as `0x${string}`,
         licensorIpId: licensorIpId as `0x${string}`,
         receiver: (receiver as `0x${string}`) || undefined,
         amount,
@@ -399,7 +399,7 @@ class StoryProtocolService {
         },
         derivData: {
           parentIpIds: [parentIpId as `0x${string}`],
-          licenseTermsIds: [licenseTermsId as any],
+          licenseTermsIds: [licenseTermsId as `0x${string}`],
         },
         ipMetadata: {
           ipMetadataURI: `https://ipfs.io/ipfs/${ipIpfsHash}`,
@@ -507,7 +507,7 @@ class StoryProtocolService {
       console.log("Getting license terms for IP:", ipId);
 
       const response = await client.license.getLicenseTerms(
-        ipId as `0x${string}` as any
+        ipId as `0x${string}`
       );
 
       return {
@@ -553,7 +553,7 @@ class StoryProtocolService {
 
       return {
         success: true,
-        transactionHash: response.txHash,
+        transactionHash: response.txHashes?.[0] || "",
         claimedTokens: response.claimedTokens,
         ipId,
         claimer,
@@ -592,7 +592,7 @@ class StoryProtocolService {
   /**
    * Serialize BigInt values to strings for JSON serialization
    */
-  private serializeBigInts(obj: any): any {
+  private serializeBigInts(obj: unknown): unknown {
     if (obj === null || obj === undefined) {
       return obj;
     }
@@ -606,7 +606,7 @@ class StoryProtocolService {
     }
 
     if (typeof obj === "object") {
-      const serialized: any = {};
+      const serialized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(obj)) {
         serialized[key] = this.serializeBigInts(value);
       }

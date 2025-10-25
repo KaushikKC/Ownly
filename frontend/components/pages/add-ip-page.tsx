@@ -257,7 +257,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
         sourcePlatform: "youtube",
         thumbnailUrl,
         duration,
-        ownerAddress: user?.walletAddress, // Pass the current user's wallet address
+        ownerAddress: user?.walletAddress || undefined, // Pass the current user's wallet address
         collaborators:
           selectedCollaborators.length > 0
             ? selectedCollaborators.map((c) => ({

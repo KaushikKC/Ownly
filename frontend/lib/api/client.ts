@@ -576,17 +576,6 @@ class ApiClient {
   }
 
   // Claim Revenue
-  async claimRevenue(data: {
-    assetId: string;
-    ipId: string;
-    claimer: string;
-    claimedTokens: any;
-    transactionHash?: string;
-  }) {
-    const response = await this.client.post("/ip-assets/claim-revenue", data);
-    return response.data;
-  }
-
   async getRevenueShare(assetId: string) {
     const response = await this.client.get(
       `/ip-assets/${assetId}/revenue-share`
@@ -594,7 +583,13 @@ class ApiClient {
     return response.data;
   }
 
-  async claimRevenue(data: { assetId: string; amount: string }) {
+  async claimRevenue(data: {
+    assetId: string;
+    ipId: string;
+    claimer: string;
+    claimedTokens: Record<string, string>;
+    transactionHash: string;
+  }) {
     const response = await this.client.post("/ip-assets/claim-revenue", data);
     return response.data;
   }

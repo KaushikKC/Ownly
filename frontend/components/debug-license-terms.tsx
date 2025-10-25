@@ -22,7 +22,13 @@ interface DebugLicenseTermsProps {
 export default function DebugLicenseTerms({ asset }: DebugLicenseTermsProps) {
   const [licenseTermsId, setLicenseTermsId] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<{
+    licenseTermsId: string;
+    terms: string;
+    commercialUse: boolean;
+    attributionRequired: boolean;
+    royaltyPercentage: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGetLicenseTerms = async () => {
@@ -158,7 +164,7 @@ export default function DebugLicenseTerms({ asset }: DebugLicenseTermsProps) {
             <code>response.licenseTermsIds[0]</code>
           </p>
           <p>
-            3. This ID is also stored in your asset's{" "}
+            3. This ID is also stored in your asset&apos;s{" "}
             <code>license.storyProtocolLicenseId</code> field
           </p>
           <p>

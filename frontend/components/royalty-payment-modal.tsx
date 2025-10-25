@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -163,9 +164,11 @@ export default function RoyaltyPaymentModal({
             <CardContent>
               <div className="flex items-center gap-4">
                 {ipAsset.thumbnailUrl && (
-                  <img
+                  <Image
                     src={ipAsset.thumbnailUrl}
                     alt={ipAsset.title}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 object-cover rounded-lg"
                   />
                 )}
