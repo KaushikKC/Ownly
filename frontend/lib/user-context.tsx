@@ -22,6 +22,8 @@ interface UserContextType {
   disconnectWallet: () => void;
   connectGoogle: () => void;
   disconnectGoogle: () => void;
+  connectInstagram: () => void;
+  disconnectInstagram: () => void;
   logout: () => void;
   registerUser: (userData: {
     email: string;
@@ -152,6 +154,30 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const connectInstagram = async () => {
+    try {
+      setIsLoading(true);
+      await signIn("instagram", { callbackUrl: "/" });
+    } catch (error) {
+      console.error("Failed to connect Instagram:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const disconnectInstagram = async () => {
+    try {
+      setIsLoading(true);
+      await signOut({ callbackUrl: "/" });
+      // Clear backend user data when Instagram disconnects
+      setBackendUser(null);
+    } catch (error) {
+      console.error("Failed to disconnect Instagram:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const registerUser = async (userData: {
     email: string;
     name: string;
@@ -228,6 +254,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     disconnectWallet,
     connectGoogle,
     disconnectGoogle,
+    connectInstagram,
+    disconnectInstagram,
     logout,
     registerUser,
     updateProfile,

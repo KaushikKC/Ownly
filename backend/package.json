@@ -19,15 +19,19 @@
   "author": "Ownly Team",
   "license": "MIT",
   "dependencies": {
+    "@story-protocol/core-sdk": "^1.4.1",
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "ethers": "^6.15.0",
     "express": "^5.1.0",
     "googleapis": "^164.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.2",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "pinata-web3": "^0.5.4",
+    "viem": "^2.38.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

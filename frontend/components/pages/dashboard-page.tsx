@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Bell, Plus, Menu, Youtube, LogOut } from "lucide-react";
 import IPCard from "@/components/ip-card";
 import IPDetailModal from "@/components/ip-detail-modal";
+import StoryProtocolCard from "@/components/story-protocol-card";
 import Sidebar from "@/components/sidebar";
 import { useUser } from "@/lib/user-context";
+import apiClient from "@/lib/api/client";
 
 interface DashboardPageProps {
   userEmail: string;
@@ -23,6 +25,37 @@ interface DashboardPageProps {
       | "license-video"
       | "youtube-link"
   ) => void;
+}
+
+interface UserAsset {
+  _id: string;
+  title: string;
+  description: string;
+  sourceUrl: string;
+  sourcePlatform: string;
+  thumbnailUrl: string;
+  status: string;
+  storyProtocolAssetId?: string;
+  owner: string;
+  collaborators: Array<{
+    userId: string;
+    walletAddress: string;
+    ownershipPercentage: number;
+    role: string;
+    approved: boolean;
+  }>;
+  license: {
+    type: string;
+    price: number;
+    royaltyPercentage: number;
+    terms: string;
+    commercialUse: boolean;
+    attributionRequired: boolean;
+    exclusivity: string;
+    status: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 const mockIPs = [
@@ -118,6 +151,27 @@ export default function DashboardPage({
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userAssets, setUserAssets] = useState<UserAsset[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load user assets on component mount
+  useEffect(() => {
+    const loadUserAssets = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.getMyAssets();
+        if (response.success) {
+          setUserAssets(response.assets);
+        }
+      } catch (error) {
+        console.error("Failed to load user assets:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserAssets();
+  }, []);
 
   const handleIPSelect = (ip: (typeof mockIPs)[0]) => {
     setSelectedIP(ip);
@@ -186,13 +240,21 @@ export default function DashboardPage({
                 <p className="text-sm text-muted-foreground mb-1">
                   Total Registered IPs
                 </p>
-                <p className="text-3xl font-bold text-foreground">8</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {loading ? "..." : userAssets.length + mockIPs.length}
+                </p>
               </Card>
               <Card className="p-6 bg-card border border-border">
                 <p className="text-sm text-muted-foreground mb-1">
-                  Active Collaborations
+                  Story Protocol Assets
                 </p>
-                <p className="text-3xl font-bold text-foreground">3</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {loading
+                    ? "..."
+                    : userAssets.filter(
+                        (asset: UserAsset) => asset.storyProtocolAssetId
+                      ).length}
+                </p>
               </Card>
               <Card className="p-6 bg-card border border-border">
                 <p className="text-sm text-muted-foreground mb-1">
@@ -227,6 +289,12 @@ export default function DashboardPage({
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Show user's real assets with Story Protocol integration */}
+                {userAssets.map((asset: UserAsset) => (
+                  <StoryProtocolCard key={asset._id} asset={asset} />
+                ))}
+
+                {/* Show mock IPs for demonstration */}
                 {mockIPs.map((ip) => (
                   <IPCard key={ip.id} {...ip} onSelect={handleIPSelect} />
                 ))}

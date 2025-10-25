@@ -115,9 +115,47 @@ const ipAssetSchema = new mongoose.Schema({
   // Status
   status: {
     type: String,
-    enum: ["draft", "pending", "registered", "disputed", "suspended"],
+    enum: ["draft", "pending", "registered", "rejected", "disputed"],
     default: "draft",
   },
+
+  // Disputes
+  disputes: [
+    {
+      assetId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "IPAsset",
+      },
+      claimantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      claimantAddress: {
+        type: String,
+      },
+      disputeReason: {
+        type: String,
+      },
+      storyProtocolDisputeId: {
+        type: String,
+      },
+      transactionHash: {
+        type: String,
+      },
+      status: {
+        type: String,
+        enum: ["pending", "resolved", "rejected"],
+        default: "pending",
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+      resolvedAt: {
+        type: Date,
+      },
+    },
+  ],
 
   // Timestamps
   createdAt: {

@@ -432,9 +432,76 @@ class ApiClient {
     return response.data;
   }
 
+  // Story Protocol endpoints
+  async registerStoryProtocol(data: {
+    assetId: string;
+    licenseTerms?: {
+      type: string;
+      royaltyPercentage: number;
+      mintingFee?: string;
+      duration?: string;
+      commercialUse?: boolean;
+      attributionRequired?: boolean;
+      exclusivity?: string;
+    };
+    collaborators?: {
+      userId: string;
+      walletAddress: string;
+      ownershipPercentage: number;
+      role: string;
+      approved: boolean;
+    }[];
+  }) {
+    const response = await this.client.post(
+      "/ip-assets/register-story-protocol",
+      data
+    );
+    return response.data;
+  }
+
+  async getStoryProtocolData(assetId: string) {
+    const response = await this.client.get(
+      `/ip-assets/${assetId}/story-protocol`
+    );
+    return response.data;
+  }
+
+  async verifyStoryProtocolOwnership(assetId: string) {
+    const response = await this.client.post(
+      `/ip-assets/${assetId}/verify-ownership`
+    );
+    return response.data;
+  }
+
   // Health check
   async healthCheck() {
     const response = await this.client.get("/health");
+    return response.data;
+  }
+
+  async checkViolations(data: {
+    sourceUrl: string;
+    title: string;
+    thumbnailUrl?: string;
+  }) {
+    const response = await this.client.post(
+      "/ip-assets/check-violations",
+      data
+    );
+    return response.data;
+  }
+
+  async recordDispute(data: {
+    assetId: string;
+    disputeReason: string;
+    claimantAddress: string;
+  }) {
+    const response = await this.client.post("/ip-assets/record-dispute", data);
+    return response.data;
+  }
+
+  async getDisputedIPs() {
+    const response = await this.client.get("/ip-assets/disputed-ips");
     return response.data;
   }
 }

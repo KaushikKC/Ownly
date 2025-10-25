@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import InstagramProvider from "next-auth/providers/instagram";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -13,6 +14,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           response_type: "code",
         },
       },
+    }),
+    InstagramProvider({
+      clientId: process.env.INSTAGRAM_CLIENT_ID!,
+      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET!,
     }),
   ],
   callbacks: {

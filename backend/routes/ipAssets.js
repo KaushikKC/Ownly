@@ -215,4 +215,202 @@ router.post("/check-url", async (req, res) => {
   }
 });
 
+// Check for IP violations/duplicates
+router.post("/check-violations", auth, async (req, res) => {
+  try {
+    const { sourceUrl, title, thumbnailUrl } = req.body;
+
+    // Check for exact URL matches
+    const urlMatch = await IPAsset.findOne({
+      sourceUrl: sourceUrl,
+      status: { $in: ["registered", "pending"] },
+    }).populate("owner", "name email");
+
+    // Check for similar titles (basic similarity check)
+    const titleMatches = await IPAsset.find({
+      title: { $regex: title, $options: "i" },
+      status: { $in: ["registered", "pending"] },
+    }).populate("owner", "name email");
+
+    // Check for thumbnail hash matches (if thumbnailUrl provided)
+    let thumbnailMatches = [];
+    if (thumbnailUrl) {
+      thumbnailMatches = await IPAsset.find({
+        thumbnailUrl: thumbnailUrl,
+        status: { $in: ["registered", "pending"] },
+      }).populate("owner", "name email");
+    }
+
+    const violations = {
+      urlMatch: urlMatch
+        ? {
+            assetId: urlMatch._id,
+            owner: urlMatch.owner,
+            title: urlMatch.title,
+            registeredAt: urlMatch.registeredAt,
+            storyProtocolAssetId: urlMatch.storyProtocolAssetId,
+          }
+        : null,
+      titleMatches: titleMatches.map((asset) => ({
+        assetId: asset._id,
+        owner: asset.owner,
+        title: asset.title,
+        registeredAt: asset.registeredAt,
+        storyProtocolAssetId: asset.storyProtocolAssetId,
+      })),
+      thumbnailMatches: thumbnailMatches.map((asset) => ({
+        assetId: asset._id,
+        owner: asset.owner,
+        title: asset.title,
+        registeredAt: asset.registeredAt,
+        storyProtocolAssetId: asset.storyProtocolAssetId,
+      })),
+    };
+
+    const hasViolations =
+      violations.urlMatch ||
+      violations.titleMatches.length > 0 ||
+      violations.thumbnailMatches.length > 0;
+
+    res.json({
+      success: true,
+      hasViolations,
+      violations,
+    });
+  } catch (error) {
+    console.error("Check violations error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to check for violations",
+      error: error.message,
+    });
+  }
+});
+
+// Record IP dispute
+router.post("/record-dispute", auth, async (req, res) => {
+  try {
+    const {
+      assetId,
+      disputeReason,
+      claimantAddress,
+      storyProtocolDisputeId,
+      transactionHash,
+    } = req.body;
+
+    const asset = await IPAsset.findById(assetId);
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    // Create dispute record
+    const dispute = {
+      assetId: assetId,
+      claimantId: req.user.userId,
+      claimantAddress: claimantAddress,
+      disputeReason: disputeReason,
+      storyProtocolDisputeId: storyProtocolDisputeId,
+      transactionHash: transactionHash,
+      status: "pending",
+      createdAt: new Date(),
+    };
+
+    // Update asset with dispute
+    const updatedAsset = await IPAsset.findByIdAndUpdate(
+      assetId,
+      {
+        $push: { disputes: dispute },
+        status: "disputed",
+      },
+      { new: true }
+    ).populate("owner", "name email");
+
+    res.json({
+      success: true,
+      dispute,
+      asset: updatedAsset,
+    });
+  } catch (error) {
+    console.error("Record dispute error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to record dispute",
+      error: error.message,
+    });
+  }
+});
+
+// Get disputed IPs
+router.get("/disputed-ips", auth, async (req, res) => {
+  try {
+    const disputedAssets = await IPAsset.find({
+      status: "disputed",
+      $or: [
+        { owner: req.user.userId },
+        { "disputes.claimantId": req.user.userId },
+      ],
+    }).populate("owner", "name email");
+
+    res.json({
+      success: true,
+      disputedAssets,
+    });
+  } catch (error) {
+    console.error("Get disputed IPs error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get disputed IPs",
+      error: error.message,
+    });
+  }
+});
+
+// Save Story Protocol data to MongoDB
+router.post("/save-story-protocol", async (req, res) => {
+  try {
+    const { assetId, storyProtocolData } = req.body;
+
+    const asset = await IPAsset.findById(assetId);
+    if (!asset) {
+      return res.status(404).json({
+        success: false,
+        message: "Asset not found",
+      });
+    }
+
+    // No authentication required - this is just saving Story Protocol data
+    // Update asset with Story Protocol data
+    const updatedAsset = await IPAsset.findByIdAndUpdate(
+      assetId,
+      {
+        nftTokenId: storyProtocolData.nftTokenId,
+        nftContractAddress: storyProtocolData.nftContractAddress,
+        storyProtocolAssetId: storyProtocolData.storyProtocolAssetId,
+        status: "registered",
+        registeredAt: new Date(),
+        license: {
+          ...asset.license,
+          storyProtocolLicenseId: storyProtocolData.licenseId,
+        },
+      },
+      { new: true }
+    ).populate("owner", "name email profilePicture walletAddress");
+
+    res.json({
+      success: true,
+      asset: updatedAsset,
+    });
+  } catch (error) {
+    console.error("Save Story Protocol data error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to save Story Protocol data",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = router;

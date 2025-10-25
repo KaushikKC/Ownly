@@ -26,6 +26,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     isLoading,
     connectWallet,
     connectGoogle,
+    connectInstagram,
   } = useUser();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -171,12 +172,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </Button>
             <Button
               type="button"
-              disabled={true}
+              onClick={connectInstagram}
+              disabled={isLoading}
               variant="outline"
-              className="w-full flex items-center justify-center gap-2 bg-transparent opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-muted"
             >
               <Instagram className="w-4 h-4" />
-              Connect Instagram (Coming Soon)
+              Connect Instagram
             </Button>
           </div>
 

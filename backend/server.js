@@ -11,7 +11,12 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3001",
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:3001",
+      "https://ownly-ip.vercel.app",
+      "https://ownly-ip-git-main-kaushikk.vercel.app", // Vercel preview URLs
+      "https://ownly-ip-git-*.vercel.app", // Wildcard for all Vercel preview URLs
+    ],
     credentials: true,
   })
 );
@@ -25,6 +30,7 @@ app.use("/api/ip-assets", require("./routes/ipAssets"));
 app.use("/api/collaborators", require("./routes/collaborators"));
 app.use("/api/youtube", require("./routes/youtube"));
 app.use("/api/instagram", require("./routes/instagram"));
+app.use("/api", require("./routes/storyProtocol"));
 
 // Health check
 app.get("/api/health", (req, res) => {

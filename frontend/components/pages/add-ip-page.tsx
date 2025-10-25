@@ -8,6 +8,7 @@ import { ArrowLeft, Check, Youtube, Loader2, AlertCircle } from "lucide-react";
 import LicenseSelector from "@/components/license-selector";
 import { useUser } from "@/lib/user-context";
 import apiClient from "@/lib/api/client";
+import StoryProtocolService from "@/lib/storyProtocol";
 
 interface AddIPPageProps {
   onNavigate: (
@@ -54,36 +55,26 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
       ownership: number;
       approval: boolean;
     }>
-  >([
-    {
-      id: "1",
-      name: "@alexwave",
-      wallet: "0xA23F...4F9B",
-      ownership: 50,
-      approval: true,
-    },
-    {
-      id: "2",
-      name: "@mira.codes",
-      wallet: "0xB14E...A55D",
-      ownership: 30,
-      approval: false,
-    },
-    {
-      id: "3",
-      name: "@johnfilm",
-      wallet: "0xD44C...72CC",
-      ownership: 20,
-      approval: true,
-    },
-  ]);
-  const [licenseType, setLicenseType] = useState("commercial-remix");
+  >([]);
+  const [licenseType, setLicenseType] = useState("commercial");
   const [royaltyShare, setRoyaltyShare] = useState("10");
+  const [mintingFee, setMintingFee] = useState("0.1");
   const [licenseDescription, setLicenseDescription] = useState(
     "Allows commercial remixes with 10% rev share to original owner."
   );
   const [isRegistering, setIsRegistering] = useState(false);
+  const [violations, setViolations] = useState<any>(null);
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [storyProtocolData, setStoryProtocolData] = useState<{
+    assetId: string;
+    nftTokenId: string;
+    nftContractAddress: string;
+    licenseId: string;
+    transactionHashes: Record<string, string>;
+    ipfsHash: string;
+  } | null>(null);
+  const [currentAssetId, setCurrentAssetId] = useState<string | null>(null);
 
   // Auto-fetch YouTube data when URL is entered
   const handleUrlChange = async (newUrl: string) => {
@@ -161,6 +152,45 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
           channelInfo: response.channelInfo,
           message: response.message,
         });
+
+        // If ownership is verified, set the current user as the only collaborator with 100% ownership
+        if (response.isOwner && user) {
+          // Only add collaborator if user has a valid ID
+          if (user.id && user.id !== "current-user") {
+            setSelectedCollaborators([
+              {
+                id: user.id,
+                name: user.name || user.email || "Current User",
+                wallet:
+                  user.walletAddress ||
+                  "0x0000000000000000000000000000000000000000",
+                ownership: 100,
+                approval: true,
+              },
+            ]);
+          } else {
+            // If no valid user ID, don't add collaborators - the owner will be set from the user context
+            setSelectedCollaborators([]);
+          }
+
+          // Check for IP violations
+          try {
+            const violationResponse = await apiClient.checkViolations({
+              sourceUrl: url,
+              title: title,
+              thumbnailUrl: thumbnailUrl,
+            });
+
+            if (violationResponse.hasViolations) {
+              setViolations(violationResponse.violations);
+              setShowDisputeModal(true);
+              return; // Stop the flow if violations are found
+            }
+          } catch (error) {
+            console.error("Failed to check violations:", error);
+            // Continue with registration even if violation check fails
+          }
+        }
       }
     } catch (error) {
       console.error("Failed to verify ownership:", error);
@@ -180,12 +210,99 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
     );
   };
 
-  const handleRegister = () => {
-    setIsRegistering(true);
-    setTimeout(() => {
+  const handleRegister = async () => {
+    try {
+      setIsRegistering(true);
+
+      // First, create the IP asset in our database
+      const assetData = {
+        title,
+        description,
+        sourceUrl: url,
+        sourcePlatform: "youtube",
+        thumbnailUrl,
+        duration,
+        collaborators:
+          selectedCollaborators.length > 0
+            ? selectedCollaborators.map((c) => ({
+                userId: c.id,
+                walletAddress: c.wallet,
+                ownershipPercentage: c.ownership,
+                role: "collaborator",
+                approved: c.approval,
+              }))
+            : [],
+        license: {
+          type: licenseType,
+          price: 0,
+          royaltyPercentage: parseInt(royaltyShare),
+          terms: licenseDescription,
+          commercialUse: true,
+          attributionRequired: true,
+          exclusivity: "non-exclusive",
+          status: "active",
+        },
+      };
+
+      const assetResponse = await apiClient.createIPAsset(assetData);
+
+      if (assetResponse.success) {
+        setCurrentAssetId(assetResponse.asset._id);
+
+        // Register with Story Protocol using the real SDK
+        const storyProtocolService = new StoryProtocolService();
+
+        const videoData = {
+          title,
+          description,
+          sourceUrl: url,
+          thumbnailUrl,
+          duration,
+          owner:
+            user?.walletAddress || "0x0000000000000000000000000000000000000000",
+          collaborators:
+            selectedCollaborators.length > 0 ? selectedCollaborators : [],
+          license: {
+            type: licenseType,
+            royaltyPercentage: parseInt(royaltyShare),
+            mintingFee: mintingFee,
+            duration: "1 year",
+            commercialUse: true,
+            attributionRequired: true,
+            exclusivity: "non-exclusive",
+          },
+        };
+
+        const storyResponse = await storyProtocolService.registerIPAsset(
+          videoData
+        );
+
+        if (storyResponse.success) {
+          // Save Story Protocol data to backend
+          await storyProtocolService.saveToBackend(
+            assetResponse.asset._id,
+            storyResponse
+          );
+
+          setStoryProtocolData({
+            assetId: storyResponse.storyProtocolAssetId,
+            nftTokenId: storyResponse.nftTokenId,
+            nftContractAddress: storyResponse.nftContractAddress,
+            licenseId: storyResponse.licenseId,
+            transactionHashes: {
+              registration: storyResponse.transactionHash,
+            },
+            ipfsHash: storyResponse.ipfsHash,
+          });
+          setRegistrationComplete(true);
+        }
+      }
+    } catch (error) {
+      console.error("Registration failed:", error);
+      // Handle error - show error message to user
+    } finally {
       setIsRegistering(false);
-      setRegistrationComplete(true);
-    }, 2000);
+    }
   };
 
   const totalOwnership = selectedCollaborators.reduce(
@@ -228,25 +345,60 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
 
             <div className="space-y-4 mb-8 text-left bg-muted p-6 rounded-lg">
               <div>
-                <p className="text-sm text-muted-foreground">Story IP ID</p>
+                <p className="text-sm text-muted-foreground">
+                  Story Protocol Asset ID
+                </p>
                 <p className="font-mono font-semibold text-foreground">
-                  #01827
+                  {storyProtocolData?.assetId || "Loading..."}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">NFT Token ID</p>
+                <p className="font-mono font-semibold text-foreground">
+                  {storyProtocolData?.nftTokenId || "Loading..."}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Transaction Hash
+                  NFT Contract Address
                 </p>
                 <p className="font-mono font-semibold text-foreground">
-                  0x34Fa...9Df3
+                  {storyProtocolData?.nftContractAddress || "Loading..."}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">IPFS CID</p>
+                <p className="text-sm text-muted-foreground">License ID</p>
                 <p className="font-mono font-semibold text-foreground">
-                  Qm123...xyz
+                  {storyProtocolData?.licenseId || "Loading..."}
                 </p>
               </div>
+              <div>
+                <p className="text-sm text-muted-foreground">IPFS Hash</p>
+                <p className="font-mono font-semibold text-foreground">
+                  {storyProtocolData?.ipfsHash || "Loading..."}
+                </p>
+              </div>
+              {storyProtocolData?.transactionHashes && (
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Transaction Hashes
+                  </p>
+                  <div className="space-y-2">
+                    {Object.entries(storyProtocolData.transactionHashes).map(
+                      ([key, hash]) => (
+                        <div key={key}>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {key.replace(/([A-Z])/g, " $1").trim()}:
+                          </p>
+                          <p className="font-mono text-xs text-foreground">
+                            {hash}
+                          </p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button
@@ -469,62 +621,65 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
               <>
                 <Card className="p-6 border border-border">
                   <label className="block text-sm font-semibold text-foreground mb-4">
-                    Detected Collaborators
+                    Content Owner
                   </label>
                   <div className="space-y-4">
-                    {selectedCollaborators.map((collab) => (
-                      <div
-                        key={collab.id}
-                        className="flex items-center gap-4 p-4 bg-muted rounded-lg"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-semibold text-primary">
-                            {collab.name.charAt(1).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground">
-                            {collab.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {collab.wallet}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={collab.ownership}
-                            onChange={(e) =>
-                              handleOwnershipChange(
-                                collab.id,
-                                Number.parseInt(e.target.value)
-                              )
-                            }
-                            className="w-24"
-                          />
-                          <span className="text-sm font-semibold text-foreground w-12 text-right">
-                            {collab.ownership}%
-                          </span>
-                        </div>
-                        <div className="flex-shrink-0">
-                          {collab.approval ? (
+                    {selectedCollaborators.length > 0 ? (
+                      selectedCollaborators.map((collab) => (
+                        <div
+                          key={collab.id}
+                          className="flex items-center gap-4 p-4 bg-muted rounded-lg"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-semibold text-primary">
+                              {collab.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground">
+                              {collab.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {collab.wallet}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <span className="text-sm font-semibold text-foreground">
+                              {collab.ownership}%
+                            </span>
                             <span className="text-xs font-medium text-green-600">
-                              ✅ Approved
+                              ✅ Owner
                             </span>
-                          ) : (
-                            <span className="text-xs font-medium text-yellow-600">
-                              ⏳ Pending
-                            </span>
-                          )}
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p className="text-sm">No collaborators added yet</p>
+                        <p className="text-xs">
+                          You can add collaborators if needed
+                        </p>
                       </div>
-                    ))}
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-4">
                     Total: {totalOwnership}%
                   </p>
+
+                  {/* Add Collaborator Button */}
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // TODO: Implement add collaborator functionality
+                        console.log("Add collaborator clicked");
+                      }}
+                      className="w-full"
+                    >
+                      + Add Collaborator
+                    </Button>
+                  </div>
                 </Card>
 
                 <div className="flex gap-3">
@@ -564,6 +719,23 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                     placeholder="10"
                     className="w-full"
                   />
+                </Card>
+
+                <Card className="p-6 border border-border">
+                  <label className="block text-sm font-semibold text-foreground mb-3">
+                    Minting Fee ($IP)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={mintingFee}
+                    onChange={(e) => setMintingFee(e.target.value)}
+                    placeholder="0.1"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Fee required to mint a license for this IP
+                  </p>
                 </Card>
 
                 <Card className="p-6 border border-border">
@@ -695,6 +867,166 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Dispute Modal */}
+      {showDisputeModal && violations && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="p-6 max-w-2xl w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-yellow-500" />
+              <h3 className="text-lg font-semibold">
+                ⚠️ Possible IP Violation Detected
+              </h3>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              {violations.urlMatch && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="font-medium text-red-800">
+                    Exact URL Match Found:
+                  </p>
+                  <p className="text-sm text-red-700">
+                    This URL is already registered by{" "}
+                    <strong>{violations.urlMatch.owner.name}</strong>
+                  </p>
+                  <p className="text-xs text-red-600">
+                    Registered:{" "}
+                    {new Date(
+                      violations.urlMatch.registeredAt
+                    ).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+
+              {violations.titleMatches.length > 0 && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="font-medium text-yellow-800">
+                    Similar Titles Found:
+                  </p>
+                  {violations.titleMatches.map((match: any, index: number) => (
+                    <div key={index} className="text-sm text-yellow-700">
+                      • "{match.title}" by {match.owner.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {violations.thumbnailMatches.length > 0 && (
+                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="font-medium text-orange-800">
+                    Similar Thumbnails Found:
+                  </p>
+                  {violations.thumbnailMatches.map(
+                    (match: any, index: number) => (
+                      <div key={index} className="text-sm text-orange-700">
+                        • &quot;{match.title}&quot; by {match.owner.name}
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDisputeModal(false);
+                  setViolations(null);
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    // Record dispute using Story Protocol SDK
+                    const storyProtocolService = new StoryProtocolService();
+
+                    // Get the IP ID from the violation
+                    const ipId =
+                      violations.urlMatch?.storyProtocolAssetId ||
+                      violations.titleMatches[0]?.storyProtocolAssetId;
+
+                    if (!ipId) {
+                      alert(
+                        "Cannot record dispute: The existing IP asset is not registered with Story Protocol. Only assets registered on Story Protocol can be disputed."
+                      );
+                      return;
+                    }
+
+                    // Create dispute evidence (IPFS CID)
+                    const disputeEvidence = {
+                      reason: "Duplicate IP claim",
+                      claimantAddress:
+                        user?.walletAddress ||
+                        "0x0000000000000000000000000000000000000000",
+                      originalUrl: url,
+                      originalTitle: title,
+                      timestamp: new Date().toISOString(),
+                      evidence:
+                        "User attempting to register already claimed IP asset",
+                    };
+
+                    // Upload evidence to IPFS (or use mock CID for testing)
+                    let evidenceCid: string;
+                    try {
+                      evidenceCid = await storyProtocolService.uploadToIPFS(
+                        disputeEvidence
+                      );
+                      console.log("IPFS upload successful, CID:", evidenceCid);
+                    } catch (error) {
+                      console.warn(
+                        "IPFS upload failed, using mock CID:",
+                        error
+                      );
+                      // Use a proper IPFS CID format - this is a valid IPFS hash for testing
+                      evidenceCid = `QmbWqxBEKC3P8tqsKc98xmWNzrzDtRLMiMPL8wBuTGsMnR`;
+                    }
+
+                    console.log("Using evidence CID:", evidenceCid);
+
+                    const disputeResponse =
+                      await storyProtocolService.recordDispute(
+                        ipId,
+                        "Duplicate IP claim",
+                        evidenceCid
+                      );
+
+                    if (disputeResponse.success) {
+                      // Also save to backend for tracking
+                      await apiClient.recordDispute({
+                        assetId:
+                          violations.urlMatch?.assetId ||
+                          violations.titleMatches[0]?.assetId,
+                        disputeReason: "Duplicate IP claim",
+                        claimantAddress:
+                          user?.walletAddress ||
+                          "0x0000000000000000000000000000000000000000",
+                        storyProtocolDisputeId: disputeResponse.disputeId,
+                        transactionHash: disputeResponse.transactionHash,
+                      });
+
+                      setShowDisputeModal(false);
+                      setViolations(null);
+                      alert(
+                        `Dispute recorded successfully! Transaction: ${disputeResponse.transactionHash}`
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Failed to record dispute:", error);
+                    alert("Failed to record dispute. Please try again.");
+                  }
+                }}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                Raise Dispute
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
