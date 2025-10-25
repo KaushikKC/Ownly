@@ -11,13 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  TrendingUp, 
-  ExternalLink, 
-  Copy, 
+import {
+  TrendingUp,
+  ExternalLink,
+  Copy,
   CheckCircle,
   Wallet,
-  Coins
+  Coins,
 } from "lucide-react";
 import StoryProtocolService from "@/lib/storyProtocol";
 import apiClient from "@/lib/api/client";
@@ -34,9 +34,9 @@ interface RevenueClaimModalProps {
   onSuccess?: () => void;
 }
 
-export default function RevenueClaimModal({ 
-  ipAsset, 
-  onSuccess 
+export default function RevenueClaimModal({
+  ipAsset,
+  onSuccess,
 }: RevenueClaimModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -72,13 +72,16 @@ export default function RevenueClaimModal({
 
       if (claimResult.success) {
         console.log("Story Protocol claim successful, saving to backend...");
-        
+
         // Save the claim to backend
         const backendResponse = await apiClient.claimRevenue({
           assetId: ipAsset._id,
           ipId: claimResult.ipId,
           claimer: claimResult.claimer,
-          claimedTokens: claimResult.claimedTokens,
+          claimedTokens: claimResult.claimedTokens as unknown as Record<
+            string,
+            string
+          >,
           transactionHash: claimResult.transactionHash,
         });
 
@@ -169,10 +172,7 @@ export default function RevenueClaimModal({
                       size="sm"
                       variant="ghost"
                       onClick={() =>
-                        copyToClipboard(
-                          ipAsset.storyProtocolAssetId!,
-                          "ipId"
-                        )
+                        copyToClipboard(ipAsset.storyProtocolAssetId!, "ipId")
                       }
                       className="h-4 w-4 p-0"
                     >
@@ -209,8 +209,9 @@ export default function RevenueClaimModal({
                 <span className="text-sm font-medium">Revenue Information</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                This will claim all available revenue for this IP Asset from the royalty vault. 
-                Revenue includes payments from external sources and derivative IPs.
+                This will claim all available revenue for this IP Asset from the
+                royalty vault. Revenue includes payments from external sources
+                and derivative IPs.
               </p>
             </div>
 
@@ -223,7 +224,7 @@ export default function RevenueClaimModal({
                   </span>
                 </div>
                 <p className="text-xs text-blue-700 dark:text-blue-300">
-                  This IP Asset has {ipAsset.derivatives.length} derivative(s). 
+                  This IP Asset has {ipAsset.derivatives.length} derivative(s).
                   Revenue from derivatives will also be claimed.
                 </p>
               </div>
@@ -235,10 +236,7 @@ export default function RevenueClaimModal({
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleClaimRevenue}
-              disabled={loading}
-            >
+            <Button onClick={handleClaimRevenue} disabled={loading}>
               {loading ? "Claiming..." : "Claim Revenue"}
             </Button>
           </div>

@@ -23,11 +23,8 @@ export default function DebugLicenseTerms({ asset }: DebugLicenseTermsProps) {
   const [licenseTermsId, setLicenseTermsId] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
-    licenseTermsId: string;
-    terms: string;
-    commercialUse: boolean;
-    attributionRequired: boolean;
-    royaltyPercentage: number;
+    success: boolean;
+    licenseTerms: unknown;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 

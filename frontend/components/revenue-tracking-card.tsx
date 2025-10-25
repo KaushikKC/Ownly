@@ -53,6 +53,9 @@ export default function RevenueTrackingCard({
     claimedRevenue: number;
     pendingRevenue: number;
     revenueShare: number;
+    totalEarned: number;
+    claimableAmount: number;
+    parentShares: Array<{ ipId: string; revenueShare: number; amount: number }>;
   } | null>(null);
   const [claimForm, setClaimForm] = useState({
     amount: "",
@@ -313,7 +316,7 @@ export default function RevenueTrackingCard({
                                 className="flex justify-between text-xs"
                               >
                                 <span>Parent {index + 1}:</span>
-                                <span>{share.amount} WIP</span>
+                                <span>{share.revenueShare} WIP</span>
                               </div>
                             )
                           )}

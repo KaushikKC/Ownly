@@ -79,6 +79,8 @@ export default function LicenseManagementCard({
     totalRevenue: number;
     claimedRevenue: number;
     pendingRevenue: number;
+    totalEarned: number;
+    claimableAmount: number;
   } | null>(null);
   const [mintForm, setMintForm] = useState({
     licenseTermsId: "",
