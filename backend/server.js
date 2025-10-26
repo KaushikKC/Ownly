@@ -11,12 +11,37 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL || "http://localhost:3001",
-      "https://ownly-ip.vercel.app",
-      "https://ownly-ip-git-main-kaushikk.vercel.app", // Vercel preview URLs
-      "https://ownly-ip-git-*.vercel.app", // Wildcard for all Vercel preview URLs
-    ],
+    origin: function (origin, callback) {
+      console.log("CORS request from origin:", origin);
+
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        process.env.FRONTEND_URL || "http://localhost:3001",
+        "https://ownly-ip.vercel.app",
+        "https://ownly-ip-git-main-kaushikk.vercel.app",
+        /^https:\/\/ownly-ip-git-.*\.vercel\.app$/, // Regex for Vercel preview URLs
+      ];
+
+      const isAllowed = allowedOrigins.some((allowedOrigin) => {
+        if (typeof allowedOrigin === "string") {
+          return allowedOrigin === origin;
+        } else if (allowedOrigin instanceof RegExp) {
+          return allowedOrigin.test(origin);
+        }
+        return false;
+      });
+
+      console.log("CORS allowed:", isAllowed);
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.log("CORS blocked origin:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );

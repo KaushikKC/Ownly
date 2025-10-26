@@ -626,7 +626,7 @@ class StoryProtocolService {
       console.log("Saving to backend - Serialized data:", serializedData);
 
       const response = await fetch(
-        "http://localhost:5000/api/ip-assets/save-story-protocol",
+        "https://ownly-dxax.vercel.app/api/ip-assets/save-story-protocol",
         {
           method: "POST",
           headers: {

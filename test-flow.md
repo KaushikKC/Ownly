@@ -1,7 +1,7 @@
 # 🧪 Story Protocol Testing Flow
 
 ## Prerequisites
-- Backend running on `http://localhost:5000`
+- Backend running on `https://ownly-dxax.vercel.app`
 - Frontend running on `http://localhost:3000`
 - Wallet connected to Aeneid testnet
 - Some test WIP tokens (for fees)

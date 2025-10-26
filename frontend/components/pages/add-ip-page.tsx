@@ -193,7 +193,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
       console.log("Using YouTube channel ID:", user.youtubeChannelId);
 
       const response = await fetch(
-        "http://localhost:5000/api/youtube/verify-ownership",
+        "https://ownly-dxax.vercel.app/api/youtube/verify-ownership",
         {
           method: "POST",
           headers: {
