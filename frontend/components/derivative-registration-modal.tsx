@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import apiClient from "@/lib/api/client";
 import StoryProtocolService from "@/lib/storyProtocol";
+import { useUser } from "@/lib/user-context";
 
 interface DerivativeRegistrationModalProps {
   parentAsset: {
@@ -45,6 +46,7 @@ export default function DerivativeRegistrationModal({
   parentAsset,
   onSuccess,
 }: DerivativeRegistrationModalProps) {
+  const { walletAddress } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function DerivativeRegistrationModal({
     description: "",
     sourceUrl: "",
     thumbnailUrl: "",
-    owner: "",
+    owner: walletAddress || "",
     licenseTermsId: "",
     collaborators: [] as Array<{
       id: string;
@@ -63,6 +65,13 @@ export default function DerivativeRegistrationModal({
       approval: boolean;
     }>,
   });
+
+  // Update owner field when wallet address changes
+  useEffect(() => {
+    if (walletAddress && !formData.owner) {
+      setFormData((prev) => ({ ...prev, owner: walletAddress }));
+    }
+  }, [walletAddress, formData.owner]);
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
@@ -195,7 +204,7 @@ export default function DerivativeRegistrationModal({
             description: "",
             sourceUrl: "",
             thumbnailUrl: "",
-            owner: "",
+            owner: walletAddress || "",
             licenseTermsId: "",
             collaborators: [],
           });
@@ -251,7 +260,7 @@ export default function DerivativeRegistrationModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 pb-20 flex-grow overflow-y-auto">
+        <div className="space-y-4 pb-20 grow overflow-y-auto">
           {/* Parent Asset Info - Compact */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
             <div className="flex items-center gap-3">
