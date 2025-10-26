@@ -244,14 +244,14 @@ export default function DerivativeRegistrationModal({
           Register Derivative
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[90vw] max-h-[85vh] overflow-y-auto bg-linear-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20">
+      <DialogContent className="max-w-4xl w-[90vw] max-h-[80vh] overflow-y-auto bg-linear-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 flex flex-col">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-xl font-semibold text-white">
             Register Derivative IP Asset
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 pb-20">
+        <div className="space-y-4 pb-20 flex-grow overflow-y-auto">
           {/* Parent Asset Info - Compact */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
             <div className="flex items-center gap-3">
@@ -497,12 +497,12 @@ export default function DerivativeRegistrationModal({
           </div>
 
           {/* Submit Button - Sticky Footer */}
-          <div className="sticky bottom-0 bg-gradient-to-t from-black/50 to-transparent backdrop-blur-sm pt-4 border-t border-white/10 -mx-6 px-6 pb-4">
-            <div className="flex justify-end gap-3">
+          <div className="sticky bottom-0 bg-black/80 backdrop-blur-md pt-4 border-t border-white/20 -mx-6 px-6 pb-4 mt-4">
+            <div className="flex flex-col sm:flex-row justify-start gap-3">
               <Button
                 variant="outline"
                 onClick={() => setIsOpen(false)}
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-white/20 text-white hover:bg-white/10 flex-1 sm:flex-none"
               >
                 Cancel
               </Button>
@@ -515,7 +515,7 @@ export default function DerivativeRegistrationModal({
                   !formData.sourceUrl ||
                   !formData.licenseTermsId
                 }
-                className="story-button"
+                className="story-button flex-1 sm:flex-none min-h-[44px] font-semibold"
               >
                 {loading ? "Registering..." : "Register Derivative"}
               </Button>
