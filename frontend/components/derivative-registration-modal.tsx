@@ -244,21 +244,14 @@ export default function DerivativeRegistrationModal({
           Register Derivative
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className="!max-w-none !w-[95vw] !max-h-[90vh] overflow-y-auto bg-linear-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20"
-        style={{
-          maxWidth: "none",
-          width: "95vw",
-          minWidth: "90vw",
-        }}
-      >
+      <DialogContent className="max-w-4xl w-[90vw] max-h-[85vh] overflow-y-auto bg-linear-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-xl font-semibold text-white">
             Register Derivative IP Asset
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 pb-20">
           {/* Parent Asset Info - Compact */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
             <div className="flex items-center gap-3">
@@ -310,12 +303,12 @@ export default function DerivativeRegistrationModal({
           </div>
 
           {/* Derivative Form */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">
               Derivative Information
             </h3>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-white/80">
                   Title *
@@ -327,7 +320,7 @@ export default function DerivativeRegistrationModal({
                     setFormData({ ...formData, title: e.target.value })
                   }
                   placeholder="Enter derivative title"
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
                 />
               </div>
               <div className="space-y-2">
@@ -341,7 +334,7 @@ export default function DerivativeRegistrationModal({
                     setFormData({ ...formData, owner: e.target.value })
                   }
                   placeholder="0x..."
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
                 />
               </div>
             </div>
@@ -357,12 +350,12 @@ export default function DerivativeRegistrationModal({
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder="Describe your derivative work"
-                rows={4}
+                rows={3}
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="sourceUrl" className="text-white/80">
                   Source URL *
@@ -374,7 +367,7 @@ export default function DerivativeRegistrationModal({
                     setFormData({ ...formData, sourceUrl: e.target.value })
                   }
                   placeholder="https://..."
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
                 />
               </div>
               <div className="space-y-2">
@@ -388,7 +381,7 @@ export default function DerivativeRegistrationModal({
                     setFormData({ ...formData, thumbnailUrl: e.target.value })
                   }
                   placeholder="https://..."
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
                 />
               </div>
             </div>
@@ -427,7 +420,7 @@ export default function DerivativeRegistrationModal({
               {formData.collaborators.map((collab, index) => (
                 <Card key={collab.id} className="glassy-card">
                   <CardContent className="p-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div className="space-y-2">
                         <Label
                           htmlFor={`collab-name-${index}`}
@@ -442,7 +435,7 @@ export default function DerivativeRegistrationModal({
                             updateCollaborator(index, "name", e.target.value)
                           }
                           placeholder="Collaborator name"
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
                         />
                       </div>
                       <div className="space-y-2">
@@ -459,7 +452,7 @@ export default function DerivativeRegistrationModal({
                             updateCollaborator(index, "wallet", e.target.value)
                           }
                           placeholder="0x..."
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
                         />
                       </div>
                       <div className="space-y-2">
@@ -483,7 +476,7 @@ export default function DerivativeRegistrationModal({
                           placeholder="0"
                           min="0"
                           max="100"
-                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10"
                         />
                       </div>
                       <div className="flex items-end">
@@ -491,7 +484,7 @@ export default function DerivativeRegistrationModal({
                           onClick={() => removeCollaborator(index)}
                           variant="destructive"
                           size="sm"
-                          className="bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 h-12"
+                          className="bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 h-10"
                         >
                           Remove
                         </Button>
@@ -503,28 +496,30 @@ export default function DerivativeRegistrationModal({
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-            <Button
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={
-                loading ||
-                !formData.title ||
-                !formData.description ||
-                !formData.sourceUrl ||
-                !formData.licenseTermsId
-              }
-              className="story-button"
-            >
-              {loading ? "Registering..." : "Register Derivative"}
-            </Button>
+          {/* Submit Button - Sticky Footer */}
+          <div className="sticky bottom-0 bg-gradient-to-t from-black/50 to-transparent backdrop-blur-sm pt-4 border-t border-white/10 -mx-6 px-6 pb-4">
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={
+                  loading ||
+                  !formData.title ||
+                  !formData.description ||
+                  !formData.sourceUrl ||
+                  !formData.licenseTermsId
+                }
+                className="story-button"
+              >
+                {loading ? "Registering..." : "Register Derivative"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

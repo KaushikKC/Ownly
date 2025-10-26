@@ -278,7 +278,7 @@ export default function LicenseManagementCard({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="receiver" className="text-white/80">
-                    Receiver Address (Optional)
+                    Receiver (Optional)
                   </Label>
                   <Input
                     id="receiver"
@@ -384,7 +384,7 @@ export default function LicenseManagementCard({
                             variant="ghost"
                             onClick={() =>
                               window.open(
-                                `https://aeneid.explorer.story.foundation/tx/${token.transactionHash}`,
+                                `https://aeneid.storyscan.io/tx/${token.transactionHash}`,
                                 "_blank"
                               )
                             }
@@ -509,7 +509,7 @@ export default function LicenseManagementCard({
                             variant="ghost"
                             onClick={() =>
                               window.open(
-                                `https://aeneid.explorer.story.foundation/tx/${payment.transactionHash}`,
+                                `https://aeneid.storyscan.io/tx/${payment.transactionHash}`,
                                 "_blank"
                               )
                             }

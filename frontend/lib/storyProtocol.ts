@@ -182,7 +182,7 @@ class StoryProtocolService {
         `Root IPA created at transaction hash ${response.txHash}, IPA ID: ${response.ipId}`
       );
       console.log(
-        `View on the explorer: https://aeneid.explorer.story.foundation/ipa/${response.ipId}`
+        `View on the explorer: https://aeneid.storyscan.io/ipa/${response.ipId}`
       );
 
       return {
@@ -193,7 +193,7 @@ class StoryProtocolService {
         licenseId: response.licenseTermsIds?.[0] || "",
         transactionHash: response.txHash,
         ipfsHash: ipIpfsHash,
-        explorerUrl: `https://aeneid.explorer.story.foundation/ipa/${response.ipId}`,
+        explorerUrl: `https://aeneid.storyscan.io/ipa/${response.ipId}`,
       };
     } catch (error) {
       console.error("Story Protocol registration error:", error);
@@ -258,7 +258,7 @@ class StoryProtocolService {
         success: true,
         disputeId: disputeResponse.disputeId,
         transactionHash: disputeResponse.txHash,
-        explorerUrl: `https://aeneid.explorer.story.foundation/ipa/${ipId}`,
+        explorerUrl: `https://aeneid.storyscan.io/ipa/${ipId}`,
       };
     } catch (error) {
       console.error("Story Protocol dispute recording error:", error);
@@ -299,7 +299,7 @@ class StoryProtocolService {
         success: true,
         licenseTokenIds: response.licenseTokenIds,
         transactionHash: response.txHash,
-        explorerUrl: `https://aeneid.explorer.story.foundation/ipa/${licensorIpId}`,
+        explorerUrl: `https://aeneid.storyscan.io/ipa/${licensorIpId}`,
       };
     } catch (error) {
       console.error("License token minting error:", error);
@@ -419,7 +419,7 @@ class StoryProtocolService {
         tokenId: response.tokenId,
         transactionHash: response.txHash,
         ipfsHash: ipIpfsHash,
-        explorerUrl: `https://aeneid.explorer.story.foundation/ipa/${response.ipId}`,
+        explorerUrl: `https://aeneid.storyscan.io/ipa/${response.ipId}`,
       };
     } catch (error) {
       console.error("Derivative registration error:", error);
@@ -455,7 +455,7 @@ class StoryProtocolService {
         amount: parseEther(amount),
         receiverIpId,
         payerIpId: "External",
-        explorerUrl: `https://aeneid.explorer.story.foundation/ipa/${receiverIpId}`,
+        explorerUrl: `https://aeneid.storyscan.io/ipa/${receiverIpId}`,
       };
     } catch (error) {
       console.error("Royalty payment error:", error);
@@ -491,7 +491,7 @@ class StoryProtocolService {
         amount: parseEther(amount),
         receiverIpId,
         payerIpId,
-        explorerUrl: `https://aeneid.explorer.story.foundation/ipa/${receiverIpId}`,
+        explorerUrl: `https://aeneid.storyscan.io/ipa/${receiverIpId}`,
       };
     } catch (error) {
       console.error("Royalty payment error:", error);
@@ -557,7 +557,7 @@ class StoryProtocolService {
         claimedTokens: response.claimedTokens,
         ipId,
         claimer,
-        explorerUrl: `https://aeneid.explorer.story.foundation/ipa/${ipId}`,
+        explorerUrl: `https://aeneid.storyscan.io/ipa/${ipId}`,
       };
     } catch (error) {
       console.error("Claim revenue error:", error);

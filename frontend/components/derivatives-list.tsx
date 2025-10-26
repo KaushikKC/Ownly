@@ -132,7 +132,7 @@ export default function DerivativesList({ asset }: DerivativesListProps) {
                           variant="ghost"
                           onClick={() =>
                             window.open(
-                              `https://aeneid.explorer.story.foundation/ipa/${derivative.storyProtocolAssetId}`,
+                              `https://aeneid.storyscan.io/ipa/${derivative.storyProtocolAssetId}`,
                               "_blank"
                             )
                           }

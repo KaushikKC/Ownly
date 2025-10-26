@@ -187,7 +187,7 @@ export default function RevenueClaimModal({
                       variant="ghost"
                       onClick={() =>
                         window.open(
-                          `https://aeneid.explorer.story.foundation/ipa/${ipAsset.storyProtocolAssetId}`,
+                          `https://aeneid.storyscan.io/ipa/${ipAsset.storyProtocolAssetId}`,
                           "_blank"
                         )
                       }

@@ -397,7 +397,7 @@ export default function RevenueTrackingCard({
                           variant="ghost"
                           onClick={() =>
                             window.open(
-                              `https://aeneid.explorer.story.foundation/tx/${payment.transactionHash}`,
+                              `https://aeneid.storyscan.io/tx/${payment.transactionHash}`,
                               "_blank"
                             )
                           }
@@ -463,7 +463,7 @@ export default function RevenueTrackingCard({
                           variant="ghost"
                           onClick={() =>
                             window.open(
-                              `https://aeneid.explorer.story.foundation/tx/${claim.transactionHash}`,
+                              `https://aeneid.storyscan.io/tx/${claim.transactionHash}`,
                               "_blank"
                             )
                           }
