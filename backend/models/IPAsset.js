@@ -30,7 +30,16 @@ const collaboratorSchema = new mongoose.Schema({
 const licenseSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ["commercial", "non-commercial", "derivative", "exclusive"],
+    enum: [
+      "commercial",
+      "non-commercial",
+      "derivative",
+      "exclusive",
+      "commercial-remix",
+      "private-draft",
+      "educational",
+      "personal",
+    ],
     required: true,
   },
   royaltyPercentage: {
