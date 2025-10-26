@@ -454,7 +454,7 @@ const audioHash = fpcalc('audio.mp3');
 
 ## Demo & Hosted Links (Placeholders)
 
-- **Live Demo URL**: `https://www.youtube.com/watch?v=o3B0BqDeuI0` (replace with your demo link)
+- **Live Demo URL**: `https://www.youtube.com/watch?v=o3B0BqDeuI0`
 - **Hosted Frontend**: `https://ownly-ip.vercel.app/`
 - **Hosted Backend/API**: `https://ownly-dxax.vercel.app/`
 - **Story Protocol Testnet**: `https://aeneid.storyrpc.io`
