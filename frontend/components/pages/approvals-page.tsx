@@ -1,12 +1,25 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ArrowLeft, Check, X } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, Check, X } from "lucide-react";
+import TopHeader from "@/components/header";
+import { useUser } from "@/lib/user-context";
+
+type PageType =
+  | "login"
+  | "dashboard"
+  | "add-ip"
+  | "approvals"
+  | "verify-ip"
+  | "settings"
+  | "youtube-import"
+  | "license-video"
+  | "youtube-link";
 
 interface ApprovalsPageProps {
-  onNavigate: (page: "dashboard" | "add-ip" | "approvals" | "login" | "verify-ip" | "settings") => void
+  onNavigate: (page: PageType) => void;
 }
 
 const mockRequests = [
@@ -34,33 +47,48 @@ const mockRequests = [
     ownership: "20%",
     status: "approved",
   },
-]
+];
 
 export default function ApprovalsPage({ onNavigate }: ApprovalsPageProps) {
-  const [requests, setRequests] = useState(mockRequests)
-  const [activeTab, setActiveTab] = useState<"pending" | "approved" | "rejected">("pending")
+  const {
+    user,
+    walletAddress,
+    isConnected,
+    connectWallet,
+    disconnectWallet,
+    logout,
+  } = useUser();
+  const [requests, setRequests] = useState(mockRequests);
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "approved" | "rejected"
+  >("pending");
 
   const handleApprove = (id: string) => {
-    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: "approved" } : r)))
-  }
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "approved" } : r))
+    );
+  };
 
   const handleReject = (id: string) => {
-    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: "rejected" } : r)))
-  }
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "rejected" } : r))
+    );
+  };
 
-  const filteredRequests = requests.filter((r) => r.status === activeTab)
+  const filteredRequests = requests.filter((r) => r.status === activeTab);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
-          <button onClick={() => onNavigate("dashboard")} className="p-2 hover:bg-muted rounded-lg">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold text-foreground">Collaboration Approvals</h1>
-        </div>
-      </div>
+      <TopHeader
+        userEmail={user?.email || ""}
+        currentPage="approvals"
+        walletAddress={walletAddress || ""}
+        connectedWallet={isConnected}
+        connectedGoogle={!!user?.email}
+        onWalletConnect={connectWallet}
+        onDisconnect={logout}
+        onNavigate={onNavigate}
+      />
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-8">
@@ -76,7 +104,8 @@ export default function ApprovalsPage({ onNavigate }: ApprovalsPageProps) {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)} ({requests.filter((r) => r.status === tab).length})
+              {tab.charAt(0).toUpperCase() + tab.slice(1)} (
+              {requests.filter((r) => r.status === tab).length})
             </button>
           ))}
         </div>
@@ -85,7 +114,10 @@ export default function ApprovalsPage({ onNavigate }: ApprovalsPageProps) {
         <div className="space-y-4">
           {filteredRequests.length > 0 ? (
             filteredRequests.map((request) => (
-              <Card key={request.id} className="p-4 border border-border hover:border-primary/30 transition-colors">
+              <Card
+                key={request.id}
+                className="p-4 border border-border hover:border-primary/30 transition-colors"
+              >
                 <div className="flex items-center gap-4">
                   {/* Thumbnail */}
                   <div className="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
@@ -98,9 +130,15 @@ export default function ApprovalsPage({ onNavigate }: ApprovalsPageProps) {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">{request.title}</p>
-                    <p className="text-sm text-muted-foreground">Requested by {request.initiator}</p>
-                    <p className="text-sm text-muted-foreground">Proposed Ownership: {request.ownership}</p>
+                    <p className="font-semibold text-foreground truncate">
+                      {request.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Requested by {request.initiator}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Proposed Ownership: {request.ownership}
+                    </p>
                   </div>
 
                   {/* Status indicator */}
@@ -139,19 +177,27 @@ export default function ApprovalsPage({ onNavigate }: ApprovalsPageProps) {
                     </div>
                   )}
                   {request.status === "approved" && (
-                    <span className="text-sm font-medium text-green-600">Approved</span>
+                    <span className="text-sm font-medium text-green-600">
+                      Approved
+                    </span>
                   )}
-                  {request.status === "rejected" && <span className="text-sm font-medium text-red-600">Rejected</span>}
+                  {request.status === "rejected" && (
+                    <span className="text-sm font-medium text-red-600">
+                      Rejected
+                    </span>
+                  )}
                 </div>
               </Card>
             ))
           ) : (
             <Card className="p-12 border border-border text-center">
-              <p className="text-muted-foreground">No {activeTab} collaboration requests</p>
+              <p className="text-muted-foreground">
+                No {activeTab} collaboration requests
+              </p>
             </Card>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

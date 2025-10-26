@@ -395,13 +395,12 @@ router.post("/check-violations", async (req, res) => {
       const isSameUser =
         currentWalletAddress && match.owner === currentWalletAddress;
 
-      // Flag if: same user OR very high similarity (95%+)
+      // Flag if: different user AND high similarity (95%+)
       // For legacy data without owner info, only flag if very high similarity (98%+)
       return (
         similarity >= SIMILARITY_THRESHOLD &&
-        (isSameUser ||
-          similarity >= 0.95 ||
-          (!match.owner && similarity >= 0.98))
+        !isSameUser && // Don't flag same user
+        (similarity >= 0.95 || (!match.owner && similarity >= 0.98))
       );
     });
 
@@ -410,21 +409,31 @@ router.post("/check-violations", async (req, res) => {
       (match) => {
         const isSameUser =
           currentWalletAddress && match.owner === currentWalletAddress;
-        // Flag if: same user OR exact thumbnail match
+        // Flag if: different user AND exact thumbnail match
         // For legacy data without owner info, only flag exact matches
-        return isSameUser || match.similarity >= 1.0;
+        return !isSameUser && match.similarity >= 1.0;
       }
     );
+
+    // Check if URL match is a violation (consider user context)
+    const urlMatchViolation =
+      violations.urlMatch && violations.urlMatch.owner !== currentWalletAddress;
+
+    // Check if user has already registered this content
+    const isAlreadyRegistered =
+      violations.urlMatch && violations.urlMatch.owner === currentWalletAddress;
 
     // Log filtered results
     console.log("Filtered title matches:", filteredTitleMatches.length);
     console.log("Filtered thumbnail matches:", filteredThumbnailMatches.length);
     console.log("URL match:", !!violations.urlMatch);
+    console.log("URL match violation (different user):", urlMatchViolation);
+    console.log("Already registered by same user:", isAlreadyRegistered);
 
-    // URL matches are always violations (same URL = same video)
+    // URL matches are only violations if it's a different user
     // Title/thumbnail matches are only violations if filtered
     const hasViolations =
-      !!violations.urlMatch ||
+      urlMatchViolation ||
       filteredTitleMatches.length > 0 ||
       filteredThumbnailMatches.length > 0;
 
@@ -433,6 +442,7 @@ router.post("/check-violations", async (req, res) => {
     res.json({
       success: true,
       hasViolations,
+      isAlreadyRegistered,
       violations: {
         ...violations,
         titleMatches: filteredTitleMatches,

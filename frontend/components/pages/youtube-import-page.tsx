@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TopHeader from "@/components/header";
+import { useUser } from "@/lib/user-context";
 import {
   Youtube,
   Play,
@@ -21,7 +23,6 @@ import {
   ExternalLink,
   Download,
 } from "lucide-react";
-import { useUser } from "@/lib/user-context";
 import apiClient from "@/lib/api/client";
 
 interface YouTubeVideo {
@@ -49,7 +50,14 @@ interface ImportPageProps {
 }
 
 export default function YouTubeImportPage({ onNavigate }: ImportPageProps) {
-  const {} = useUser();
+  const {
+    user,
+    walletAddress,
+    isConnected,
+    connectWallet,
+    disconnectWallet,
+    logout,
+  } = useUser();
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [selectedVideos, setSelectedVideos] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
@@ -241,19 +249,21 @@ export default function YouTubeImportPage({ onNavigate }: ImportPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <TopHeader
+        userEmail={user?.email || ""}
+        currentPage="youtube-import"
+        walletAddress={walletAddress || ""}
+        connectedWallet={isConnected}
+        connectedGoogle={!!user?.email}
+        onWalletConnect={connectWallet}
+        onDisconnect={logout}
+        onNavigate={onNavigate}
+      />
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="outline"
-              onClick={() => onNavigate("dashboard")}
-              className="flex items-center gap-2"
-            >
-              ← Back to Dashboard
-            </Button>
-          </div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Youtube className="w-8 h-8 text-red-500" />
             YouTube Content Import

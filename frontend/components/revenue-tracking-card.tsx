@@ -235,50 +235,70 @@ export default function RevenueTrackingCard({
   const claimableAmount = totalEarned - totalClaimed;
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <DollarSign className="w-5 h-5" />
+    <Card className="w-full glassy-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-white">
+          <DollarSign className="w-5 h-5 text-[#41B5FF]" />
           Revenue Tracking
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="actions">Actions</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-white/5 border border-white/10 mb-6">
+            <TabsTrigger
+              value="overview"
+              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="payments"
+              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Payments
+            </TabsTrigger>
+            <TabsTrigger
+              value="actions"
+              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Actions
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-4">
+          <TabsContent value="overview" className="space-y-6">
             {/* Revenue Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                <p className="text-sm text-muted-foreground">Total Earned</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {totalEarned.toFixed(2)} WIP
-                </p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">
+                Revenue Overview
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-400" />
+                  <p className="text-sm text-white/70">Total Earned</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {totalEarned.toFixed(2)} WIP
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <Coins className="w-8 h-8 mx-auto mb-2 text-blue-400" />
+                  <p className="text-sm text-white/70">Claimable</p>
+                  <p className="text-2xl font-bold text-blue-400">
+                    {claimableAmount.toFixed(2)} WIP
+                  </p>
+                </div>
               </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <Coins className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                <p className="text-sm text-muted-foreground">Claimable</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {claimableAmount.toFixed(2)} WIP
-                </p>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <TrendingUp className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-                <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-xl font-bold text-purple-600">+$320</p>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <Users className="w-8 h-8 mx-auto mb-2 text-orange-600" />
-                <p className="text-sm text-muted-foreground">Active Licenses</p>
-                <p className="text-xl font-bold text-orange-600">12</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                  <TrendingUp className="w-8 h-8 mx-auto mb-2 text-purple-400" />
+                  <p className="text-sm text-white/70">This Month</p>
+                  <p className="text-xl font-bold text-purple-400">+$320</p>
+                </div>
+                <div className="text-center p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                  <Users className="w-8 h-8 mx-auto mb-2 text-orange-400" />
+                  <p className="text-sm text-white/70">Active Licenses</p>
+                  <p className="text-xl font-bold text-orange-400">12</p>
+                </div>
               </div>
             </div>
 

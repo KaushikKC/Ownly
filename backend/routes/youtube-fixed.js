@@ -211,7 +211,7 @@ router.post("/bulk-register", auth, async (req, res) => {
 });
 
 // Verify ownership of a YouTube video
-router.post("/verify-ownership", auth, async (req, res) => {
+router.post("/verify-ownership", async (req, res) => {
   try {
     const { videoUrl, userEmail } = req.body;
 

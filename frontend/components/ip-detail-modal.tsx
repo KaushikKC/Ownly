@@ -49,20 +49,20 @@ export default function IPDetailModal({
   const getLicenseColor = (type: string) => {
     switch (type) {
       case "Commercial Remix":
-        return "bg-blue-100 text-blue-800";
+        return "bg-[#41B5FF]/20 text-[#41B5FF] border-[#41B5FF]/30";
       case "Non-Commercial":
-        return "bg-purple-100 text-purple-800";
+        return "bg-[#99F3FB]/20 text-[#99F3FB] border-[#99F3FB]/30";
       case "Private Draft":
-        return "bg-gray-100 text-gray-800";
+        return "bg-white/10 text-white/80 border-white/20";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-white/10 text-white/80 border-white/20";
     }
   };
 
   const getStatusColor = (s: string) => {
     return s === "Active"
-      ? "bg-green-100 text-green-800"
-      : "bg-yellow-100 text-yellow-800";
+      ? "bg-green-500/20 text-green-400 border-green-500/30"
+      : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
   };
 
   return (
@@ -104,7 +104,7 @@ export default function IPDetailModal({
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4 mt-4">
-            <Card className="p-6 border border-border">
+            <Card className="glassy-card p-6">
               <h3 className="font-semibold text-foreground mb-4">
                 IP Information
               </h3>
@@ -149,7 +149,7 @@ export default function IPDetailModal({
               </div>
             </Card>
 
-            <Card className="p-6 border border-border">
+            <Card className="glassy-card p-6">
               <h3 className="font-semibold text-foreground mb-4">
                 Description
               </h3>
@@ -163,7 +163,7 @@ export default function IPDetailModal({
 
           {/* Collaborators Tab */}
           <TabsContent value="collaborators" className="space-y-4 mt-4">
-            <Card className="p-6 border border-border">
+            <Card className="glassy-card p-6">
               <h3 className="font-semibold text-foreground mb-4">
                 Collaborators ({ip.collaborators.length})
               </h3>
@@ -198,13 +198,13 @@ export default function IPDetailModal({
 
           {/* Rights Tab */}
           <TabsContent value="rights" className="space-y-4 mt-4">
-            <Card className="p-6 border border-border">
+            <Card className="glassy-card p-6">
               <h3 className="font-semibold text-foreground mb-4">
                 License Rights
               </h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-white text-xs">✓</span>
                   </div>
                   <div>
@@ -218,7 +218,7 @@ export default function IPDetailModal({
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-white text-xs">✓</span>
                   </div>
                   <div>
@@ -230,7 +230,7 @@ export default function IPDetailModal({
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-white text-xs">✓</span>
                   </div>
                   <div>
@@ -242,7 +242,7 @@ export default function IPDetailModal({
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                  <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-white text-xs">✕</span>
                   </div>
                   <div>
@@ -258,13 +258,13 @@ export default function IPDetailModal({
 
           {/* Activity Tab */}
           <TabsContent value="activity" className="space-y-4 mt-4">
-            <Card className="p-6 border border-border">
+            <Card className="glassy-card p-6">
               <h3 className="font-semibold text-foreground mb-4">
                 Recent Activity
               </h3>
               <div className="space-y-4">
                 <div className="flex gap-4 pb-4 border-b border-border last:border-b-0">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0"></div>
                   <div>
                     <p className="font-medium text-foreground">IP Registered</p>
                     <p className="text-sm text-muted-foreground">
@@ -274,7 +274,7 @@ export default function IPDetailModal({
                 </div>
 
                 <div className="flex gap-4 pb-4 border-b border-border last:border-b-0">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0"></div>
                   <div>
                     <p className="font-medium text-foreground">
                       Collaborators Added
@@ -286,7 +286,7 @@ export default function IPDetailModal({
                 </div>
 
                 <div className="flex gap-4 pb-4 border-b border-border last:border-b-0">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0"></div>
                   <div>
                     <p className="font-medium text-foreground">
                       License Activated
@@ -298,7 +298,7 @@ export default function IPDetailModal({
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0"></div>
                   <div>
                     <p className="font-medium text-foreground">
                       Royalty Payment Received

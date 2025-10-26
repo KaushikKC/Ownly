@@ -5,6 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Wallet, Mail, Instagram, X, Youtube } from "lucide-react";
+import TopHeader from "@/components/header";
+import { useUser } from "@/lib/user-context";
+
+type PageType =
+  | "login"
+  | "dashboard"
+  | "add-ip"
+  | "approvals"
+  | "verify-ip"
+  | "settings"
+  | "youtube-import"
+  | "license-video"
+  | "youtube-link";
 
 interface SettingsPageProps {
   userEmail: string;
@@ -12,15 +25,7 @@ interface SettingsPageProps {
   google: string;
   instagram: string;
   youtubeChannelId?: string;
-  onNavigate: (
-    page:
-      | "dashboard"
-      | "add-ip"
-      | "approvals"
-      | "login"
-      | "verify-ip"
-      | "settings"
-  ) => void;
+  onNavigate: (page: PageType) => void;
 }
 
 export default function SettingsPage({
@@ -31,6 +36,14 @@ export default function SettingsPage({
   youtubeChannelId,
   onNavigate,
 }: SettingsPageProps) {
+  const {
+    user,
+    walletAddress,
+    isConnected,
+    connectWallet,
+    disconnectWallet,
+    logout,
+  } = useUser();
   const [displayName, setDisplayName] = useState("Alex Wave");
   const [youtubeChannelIdInput, setYoutubeChannelIdInput] = useState(
     youtubeChannelId || ""
@@ -60,18 +73,16 @@ export default function SettingsPage({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
-          <button
-            onClick={() => onNavigate("dashboard")}
-            className="p-2 hover:bg-muted rounded-lg"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-        </div>
-      </div>
+      <TopHeader
+        userEmail={userEmail}
+        currentPage="settings"
+        walletAddress={walletAddress || ""}
+        connectedWallet={isConnected}
+        connectedGoogle={!!user?.email}
+        onWalletConnect={connectWallet}
+        onDisconnect={logout}
+        onNavigate={onNavigate}
+      />
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-8">

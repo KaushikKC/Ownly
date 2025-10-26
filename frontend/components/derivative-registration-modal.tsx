@@ -14,11 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus,
-  ExternalLink,
   Copy,
   CheckCircle,
   // Users,
@@ -245,83 +244,82 @@ export default function DerivativeRegistrationModal({
           Register Derivative
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Register Derivative IP Asset</DialogTitle>
+      <DialogContent
+        className="!max-w-none !w-[95vw] !max-h-[90vh] overflow-y-auto bg-linear-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20"
+        style={{
+          maxWidth: "none",
+          width: "95vw",
+          minWidth: "90vw",
+        }}
+      >
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-xl font-semibold text-white">
+            Register Derivative IP Asset
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Parent Asset Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Parent Asset</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                {parentAsset.thumbnailUrl && (
-                  <Image
-                    src={parentAsset.thumbnailUrl}
-                    alt={parentAsset.title}
-                    width={64}
-                    height={64}
-                    className="w-16 h-16 object-cover rounded-lg"
-                  />
-                )}
-                <div className="flex-1">
-                  <h3 className="font-medium">{parentAsset.title}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline">
-                      {parentAsset.license?.type || "Unknown License"}
-                    </Badge>
-                    <Badge variant="secondary">
-                      {parentAsset.license?.royaltyPercentage || 0}% Royalty
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      IP ID: {parentAsset.storyProtocolAssetId}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        copyToClipboard(
-                          parentAsset.storyProtocolAssetId!,
-                          "parentIpId"
-                        )
-                      }
-                      className="h-4 w-4 p-0"
-                    >
-                      {copiedField === "parentIpId" ? (
-                        <CheckCircle className="w-3 h-3" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        window.open(
-                          `https://aeneid.explorer.story.foundation/ipa/${parentAsset.storyProtocolAssetId}`,
-                          "_blank"
-                        )
-                      }
-                      className="h-4 w-4 p-0"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                    </Button>
-                  </div>
+          {/* Parent Asset Info - Compact */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              {parentAsset.thumbnailUrl && (
+                <Image
+                  src={parentAsset.thumbnailUrl}
+                  alt={parentAsset.title}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 object-cover rounded-lg shrink-0"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-white truncate text-sm">
+                  {parentAsset.title}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                    {parentAsset.license?.type || "Unknown License"}
+                  </Badge>
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                    {parentAsset.license?.royaltyPercentage || 0}% Royalty
+                  </Badge>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-white/70 font-mono">
+                  {parentAsset.storyProtocolAssetId?.slice(0, 8)}...
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    copyToClipboard(
+                      parentAsset.storyProtocolAssetId!,
+                      "parentIpId"
+                    )
+                  }
+                  className="h-6 w-6 p-0 shrink-0 hover:bg-white/10"
+                >
+                  {copiedField === "parentIpId" ? (
+                    <CheckCircle className="w-3 h-3 text-green-400" />
+                  ) : (
+                    <Copy className="w-3 h-3 text-white/60" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
 
           {/* Derivative Form */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="title">Title *</Label>
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">
+              Derivative Information
+            </h3>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-white/80">
+                  Title *
+                </Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -329,10 +327,13 @@ export default function DerivativeRegistrationModal({
                     setFormData({ ...formData, title: e.target.value })
                   }
                   placeholder="Enter derivative title"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
                 />
               </div>
-              <div>
-                <Label htmlFor="owner">Owner Address *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="owner" className="text-white/80">
+                  Owner Address *
+                </Label>
                 <Input
                   id="owner"
                   value={formData.owner}
@@ -340,12 +341,15 @@ export default function DerivativeRegistrationModal({
                     setFormData({ ...formData, owner: e.target.value })
                   }
                   placeholder="0x..."
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
                 />
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="description">Description *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-white/80">
+                Description *
+              </Label>
               <Textarea
                 id="description"
                 value={formData.description}
@@ -353,13 +357,16 @@ export default function DerivativeRegistrationModal({
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder="Describe your derivative work"
-                rows={3}
+                rows={4}
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="sourceUrl">Source URL *</Label>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="sourceUrl" className="text-white/80">
+                  Source URL *
+                </Label>
                 <Input
                   id="sourceUrl"
                   value={formData.sourceUrl}
@@ -367,10 +374,13 @@ export default function DerivativeRegistrationModal({
                     setFormData({ ...formData, sourceUrl: e.target.value })
                   }
                   placeholder="https://..."
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
                 />
               </div>
-              <div>
-                <Label htmlFor="thumbnailUrl">Thumbnail URL</Label>
+              <div className="space-y-2">
+                <Label htmlFor="thumbnailUrl" className="text-white/80">
+                  Thumbnail URL
+                </Label>
                 <Input
                   id="thumbnailUrl"
                   value={formData.thumbnailUrl}
@@ -378,12 +388,15 @@ export default function DerivativeRegistrationModal({
                     setFormData({ ...formData, thumbnailUrl: e.target.value })
                   }
                   placeholder="https://..."
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
                 />
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="licenseTermsId">License Terms ID *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="licenseTermsId" className="text-white/80">
+                License Terms ID *
+              </Label>
               <Input
                 id="licenseTermsId"
                 value={formData.licenseTermsId}
@@ -391,25 +404,37 @@ export default function DerivativeRegistrationModal({
                   setFormData({ ...formData, licenseTermsId: e.target.value })
                 }
                 placeholder="Enter license terms ID from parent"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
               />
             </div>
 
             {/* Collaborators */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <Label>Collaborators</Label>
-                <Button onClick={addCollaborator} size="sm" variant="outline">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-lg font-semibold text-white border-b border-white/10 pb-2">
+                  Collaborators
+                </h4>
+                <Button
+                  onClick={addCollaborator}
+                  size="sm"
+                  className="story-button"
+                >
                   <Plus className="w-4 h-4 mr-1" />
                   Add Collaborator
                 </Button>
               </div>
 
               {formData.collaborators.map((collab, index) => (
-                <Card key={collab.id} className="mb-3">
+                <Card key={collab.id} className="glassy-card">
                   <CardContent className="p-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor={`collab-name-${index}`}>Name</Label>
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor={`collab-name-${index}`}
+                          className="text-white/80"
+                        >
+                          Name
+                        </Label>
                         <Input
                           id={`collab-name-${index}`}
                           value={collab.name}
@@ -417,10 +442,14 @@ export default function DerivativeRegistrationModal({
                             updateCollaborator(index, "name", e.target.value)
                           }
                           placeholder="Collaborator name"
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor={`collab-wallet-${index}`}>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor={`collab-wallet-${index}`}
+                          className="text-white/80"
+                        >
                           Wallet Address
                         </Label>
                         <Input
@@ -430,10 +459,14 @@ export default function DerivativeRegistrationModal({
                             updateCollaborator(index, "wallet", e.target.value)
                           }
                           placeholder="0x..."
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor={`collab-ownership-${index}`}>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor={`collab-ownership-${index}`}
+                          className="text-white/80"
+                        >
                           Ownership %
                         </Label>
                         <Input
@@ -450,6 +483,7 @@ export default function DerivativeRegistrationModal({
                           placeholder="0"
                           min="0"
                           max="100"
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
                         />
                       </div>
                       <div className="flex items-end">
@@ -457,6 +491,7 @@ export default function DerivativeRegistrationModal({
                           onClick={() => removeCollaborator(index)}
                           variant="destructive"
                           size="sm"
+                          className="bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 h-12"
                         >
                           Remove
                         </Button>
@@ -469,8 +504,12 @@ export default function DerivativeRegistrationModal({
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="border-white/20 text-white hover:bg-white/10"
+            >
               Cancel
             </Button>
             <Button
@@ -482,6 +521,7 @@ export default function DerivativeRegistrationModal({
                 !formData.sourceUrl ||
                 !formData.licenseTermsId
               }
+              className="story-button"
             >
               {loading ? "Registering..." : "Register Derivative"}
             </Button>

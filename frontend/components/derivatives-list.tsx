@@ -67,38 +67,47 @@ export default function DerivativesList({ asset }: DerivativesListProps) {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <LinkIcon className="w-5 h-5" />
+    <Card className="w-full glassy-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-white">
+          <LinkIcon className="w-5 h-5 text-[#41B5FF]" />
           Derivatives ({asset.derivatives.length})
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <div className="space-y-4">
           {asset.derivatives.map((derivative, index) => (
-            <div key={derivative._id} className="p-4 border rounded-lg">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-medium">{derivative.title}</h4>
-                    <Badge variant="outline">
-                      {derivative.license?.type || "Derivative"}
-                    </Badge>
-                    <Badge variant="secondary">
-                      {derivative.license?.royaltyPercentage || 0}% Royalty
-                    </Badge>
+            <div
+              key={derivative._id}
+              className="p-4 bg-white/5 border border-white/10 rounded-lg"
+            >
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <h4 className="font-medium text-white truncate">
+                        {derivative.title}
+                      </h4>
+                      <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
+                        {derivative.license?.type || "Derivative"}
+                      </Badge>
+                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                        {derivative.license?.royaltyPercentage || 0}% Royalty
+                      </Badge>
+                    </div>
+
+                    <p className="text-sm text-white/70 mb-3 line-clamp-2">
+                      {derivative.description}
+                    </p>
                   </div>
+                </div>
 
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {derivative.description}
-                  </p>
-
-                  <div className="space-y-1 text-xs">
-                    {derivative.storyProtocolAssetId && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">IP ID:</span>
-                        <span className="font-mono">
+                <div className="space-y-2 text-xs">
+                  {derivative.storyProtocolAssetId && (
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-white/70 shrink-0">IP ID:</span>
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="font-mono text-white/90 truncate">
                           {derivative.storyProtocolAssetId}
                         </span>
                         <Button
@@ -110,12 +119,12 @@ export default function DerivativesList({ asset }: DerivativesListProps) {
                               `derivative-ip-${index}`
                             )
                           }
-                          className="h-4 w-4 p-0"
+                          className="h-6 w-6 p-0 shrink-0 hover:bg-white/10"
                         >
                           {copiedField === `derivative-ip-${index}` ? (
-                            <CheckCircle className="w-3 h-3" />
+                            <CheckCircle className="w-3 h-3 text-green-400" />
                           ) : (
-                            <Copy className="w-3 h-3" />
+                            <Copy className="w-3 h-3 text-white/60" />
                           )}
                         </Button>
                         <Button
@@ -127,47 +136,45 @@ export default function DerivativesList({ asset }: DerivativesListProps) {
                               "_blank"
                             )
                           }
-                          className="h-4 w-4 p-0"
+                          className="h-6 w-6 p-0 shrink-0 hover:bg-white/10"
                         >
-                          <ExternalLink className="w-3 h-3" />
+                          <ExternalLink className="w-3 h-3 text-white/60" />
                         </Button>
                       </div>
-                    )}
-
-                    {derivative.nftTokenId && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Token ID:</span>
-                        <span className="font-mono">
-                          {derivative.nftTokenId}
-                        </span>
-                      </div>
-                    )}
-
-                    {derivative.registeredAt && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">
-                          Registered:
-                        </span>
-                        <span>
-                          {new Date(
-                            derivative.registeredAt
-                          ).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Status:</span>
-                      <Badge
-                        variant={
-                          derivative.status === "registered"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {derivative.status}
-                      </Badge>
                     </div>
+                  )}
+
+                  {derivative.nftTokenId && (
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-white/70 shrink-0">Token ID:</span>
+                      <span className="font-mono text-white/90 truncate">
+                        {derivative.nftTokenId}
+                      </span>
+                    </div>
+                  )}
+
+                  {derivative.registeredAt && (
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-white/70 shrink-0">
+                        Registered:
+                      </span>
+                      <span className="text-white/90">
+                        {new Date(derivative.registeredAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-white/70 shrink-0">Status:</span>
+                    <Badge
+                      className={
+                        derivative.status === "registered"
+                          ? "bg-green-500/20 text-green-400 border-green-500/30"
+                          : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                      }
+                    >
+                      {derivative.status}
+                    </Badge>
                   </div>
                 </div>
               </div>

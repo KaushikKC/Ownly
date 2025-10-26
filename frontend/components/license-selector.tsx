@@ -9,8 +9,8 @@ interface LicenseSelectorProps {
 
 const licenses = [
   {
-    id: "commercial",
-    name: "Commercial",
+    id: "commercial-remix",
+    name: "Commercial Remix",
     description: "Allow commercial use and remixes",
   },
   {
@@ -19,14 +19,9 @@ const licenses = [
     description: "Non-commercial use only",
   },
   {
-    id: "derivative",
-    name: "Derivative",
-    description: "Allow derivative works",
-  },
-  {
-    id: "exclusive",
-    name: "Exclusive",
-    description: "Exclusive licensing rights",
+    id: "private-draft",
+    name: "Private Draft",
+    description: "Keep as private draft",
   },
 ];
 
@@ -35,7 +30,7 @@ export default function LicenseSelector({
   onChange,
 }: LicenseSelectorProps) {
   return (
-    <Card className="p-6 border border-border">
+    <Card className="glassy-card p-6">
       <label className="block text-sm font-semibold text-foreground mb-4">
         License Type
       </label>
@@ -45,8 +40,8 @@ export default function LicenseSelector({
             key={license.id}
             className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
               value === license.id
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/30"
+                ? "border-[#41B5FF] bg-[#41B5FF]/10"
+                : "border-white/20 hover:border-[#41B5FF]/30"
             }`}
           >
             <input
@@ -55,7 +50,7 @@ export default function LicenseSelector({
               value={license.id}
               checked={value === license.id}
               onChange={(e) => onChange(e.target.value)}
-              className="w-4 h-4 mt-1 flex-shrink-0"
+              className="w-4 h-4 mt-1 shrink-0"
             />
             <div>
               <p className="font-medium text-foreground">{license.name}</p>

@@ -149,7 +149,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const connectGoogle = async () => {
     try {
       setIsLoading(true);
-      await signIn("google", { callbackUrl: "/" });
+      await signIn("google", { callbackUrl: "/?page=dashboard" });
     } catch (error) {
       console.error("Failed to connect Google:", error);
     } finally {

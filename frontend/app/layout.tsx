@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import { Poppins, Geist_Mono } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.className} ${geistMono.variable} antialiased`}
+        className={`${spaceGrotesk.className} antialiased`}
+        style={{
+          background:
+            "linear-gradient(135deg, #000000 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #192032 80%, #000000 100%)",
+          minHeight: "100vh",
+        }}
       >
         <Providers>{children}</Providers>
       </body>

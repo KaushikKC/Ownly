@@ -29,20 +29,20 @@ export default function IPCard({
   const getLicenseColor = (type: string) => {
     switch (type) {
       case "Commercial Remix":
-        return "bg-blue-100 text-blue-800";
+        return "bg-[#41B5FF]/20 text-[#41B5FF] border-[#41B5FF]/30";
       case "Non-Commercial":
-        return "bg-purple-100 text-purple-800";
+        return "bg-[#99F3FB]/20 text-[#99F3FB] border-[#99F3FB]/30";
       case "Private Draft":
-        return "bg-gray-100 text-gray-800";
+        return "bg-white/10 text-white/80 border-white/20";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-white/10 text-white/80 border-white/20";
     }
   };
 
   const getStatusColor = (s: string) => {
     return s === "Active"
-      ? "bg-green-100 text-green-800"
-      : "bg-yellow-100 text-yellow-800";
+      ? "bg-green-500/20 text-green-400 border-green-500/30"
+      : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
   };
 
   const handleClick = () => {
@@ -63,7 +63,7 @@ export default function IPCard({
   return (
     <Card
       onClick={handleClick}
-      className="overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer group"
+      className="glassy-card overflow-hidden hover:border-[#41B5FF]/50 hover:shadow-2xl hover:shadow-[#41B5FF]/20 transition-all cursor-pointer group"
     >
       {/* Thumbnail */}
       <div className="aspect-video bg-muted overflow-hidden">
@@ -85,14 +85,14 @@ export default function IPCard({
           {collaborators.slice(0, 3).map((collab, idx) => (
             <div
               key={idx}
-              className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary"
+              className="w-6 h-6 rounded-full bg-linear-to-br from-[#41B5FF]/30 to-[#99F3FB]/30 flex items-center justify-center text-xs font-semibold text-white border border-white/20"
               title={collab}
             >
               {collab.charAt(1).toUpperCase()}
             </div>
           ))}
           {collaborators.length > 3 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-white/60">
               +{collaborators.length - 3}
             </span>
           )}

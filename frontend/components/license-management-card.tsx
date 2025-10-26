@@ -225,27 +225,44 @@ export default function LicenseManagementCard({
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Coins className="w-5 h-5" />
+    <Card className="w-full glassy-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-white">
+          <Coins className="w-5 h-5 text-[#41B5FF]" />
           License Management
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <Tabs defaultValue="mint" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="mint">Mint License</TabsTrigger>
-            <TabsTrigger value="pay">Pay Royalty</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-white/5 border border-white/10 mb-6">
+            <TabsTrigger
+              value="mint"
+              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Mint License
+            </TabsTrigger>
+            <TabsTrigger
+              value="pay"
+              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Pay Royalty
+            </TabsTrigger>
+            <TabsTrigger
+              value="revenue"
+              className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              Revenue
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="mint" className="space-y-4">
-            <DebugLicenseTerms asset={asset} />
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="licenseTermsId">License Terms ID</Label>
+          <TabsContent value="mint" className="space-y-6">
+            {/* <DebugLicenseTerms asset={asset} /> */}
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="licenseTermsId" className="text-white/80">
+                    License Terms ID
+                  </Label>
                   <Input
                     id="licenseTermsId"
                     value={mintForm.licenseTermsId}
@@ -256,10 +273,13 @@ export default function LicenseManagementCard({
                       })
                     }
                     placeholder="Enter license terms ID"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="receiver">Receiver Address (Optional)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="receiver" className="text-white/80">
+                    Receiver Address (Optional)
+                  </Label>
                   <Input
                     id="receiver"
                     value={mintForm.receiver}
@@ -267,13 +287,16 @@ export default function LicenseManagementCard({
                       setMintForm({ ...mintForm, receiver: e.target.value })
                     }
                     placeholder="0x..."
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="amount">Amount</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="text-white/80">
+                    Amount
+                  </Label>
                   <Input
                     id="amount"
                     type="number"
@@ -285,10 +308,13 @@ export default function LicenseManagementCard({
                       })
                     }
                     min="1"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="maxMintingFee">Max Minting Fee (WIP)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="maxMintingFee" className="text-white/80">
+                    Max Minting Fee (WIP)
+                  </Label>
                   <Input
                     id="maxMintingFee"
                     value={mintForm.maxMintingFee}
@@ -299,6 +325,7 @@ export default function LicenseManagementCard({
                       })
                     }
                     placeholder="0"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                   />
                 </div>
               </div>

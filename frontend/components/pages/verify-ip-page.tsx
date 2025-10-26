@@ -4,33 +4,33 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import {
-  ArrowLeft,
-  CheckCircle,
-  AlertCircle,
-  ExternalLink,
-  Copy,
-} from "lucide-react";
+import { CheckCircle, AlertCircle, Copy, ExternalLink } from "lucide-react";
+import TopHeader from "@/components/header";
+import { useUser } from "@/lib/user-context";
 import apiClient from "@/lib/api/client";
 
+type PageType =
+  | "login"
+  | "dashboard"
+  | "add-ip"
+  | "approvals"
+  | "verify-ip"
+  | "settings"
+  | "youtube-import"
+  | "license-video"
+  | "youtube-link";
+
 interface VerifyIPPageProps {
-  onNavigate: (
-    page:
-      | "dashboard"
-      | "add-ip"
-      | "approvals"
-      | "login"
-      | "verify-ip"
-      | "settings"
-  ) => void;
+  onNavigate: (page: PageType) => void;
 }
 
 export default function VerifyIPPage({ onNavigate }: VerifyIPPageProps) {
+  const { user, walletAddress, isConnected, connectWallet, logout } = useUser();
   const [url, setUrl] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [result, setResult] = useState<{
     status: "registered" | "not-registered" | null;
-    owner?: { name: string; email: string };
+    owner?: string;
     asset?: {
       id: string;
       title: string;
@@ -76,49 +76,47 @@ export default function VerifyIPPage({ onNavigate }: VerifyIPPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center gap-4">
-          <button
-            onClick={() => onNavigate("dashboard")}
-            className="p-2 hover:bg-muted rounded-lg"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold text-foreground">Verify IP</h1>
-        </div>
-      </div>
+    <div className="min-h-screen">
+      <TopHeader
+        userEmail={user?.email || ""}
+        currentPage="verify-ip"
+        walletAddress={walletAddress || ""}
+        connectedWallet={isConnected}
+        connectedGoogle={!!user?.email}
+        onWalletConnect={connectWallet}
+        onDisconnect={logout}
+        onNavigate={onNavigate}
+      />
 
       {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-12">
-        <Card className="p-8 border border-border">
-          <h2 className="text-lg font-semibold text-foreground mb-2">
+      <div className="max-w-2xl mx-auto px-6 py-12 pt-30">
+        <Card className="glassy-card p-8">
+          <h2 className="text-lg font-semibold text-white mb-2">
             Check IP Registration Status
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-white/70 mb-6">
             Enter a media URL to check if it&apos;s already registered as an IP
             on Story Protocol.
           </p>
 
           <div className="space-y-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-medium text-white/80 mb-2">
                 Media URL
               </label>
               <Input
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://youtube.com/watch?v=... or https://instagram.com/reel/..."
-                className="w-full"
+                placeholder="https://example.com/video"
+                className="w-full bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             </div>
 
             <Button
               onClick={handleCheck}
               disabled={isChecking || !url}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
+              className="w-full disabled:opacity-50"
             >
               {isChecking ? "Checking..." : "Check Ownership"}
             </Button>
@@ -129,14 +127,13 @@ export default function VerifyIPPage({ onNavigate }: VerifyIPPageProps) {
             <div className="space-y-4">
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="font-semibold text-green-900">
                       ✅ IP Already Registered
                     </p>
                     <p className="text-sm text-green-800">
-                      Owned by <strong>{result.owner?.name}</strong> (
-                      {result.owner?.email})
+                      Owned by <strong>{result.owner}</strong>
                     </p>
                   </div>
                 </div>
@@ -231,7 +228,7 @@ export default function VerifyIPPage({ onNavigate }: VerifyIPPageProps) {
 
           {result.status === "not-registered" && (
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-yellow-900">
                   ❌ Not Registered
@@ -242,7 +239,7 @@ export default function VerifyIPPage({ onNavigate }: VerifyIPPageProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-2 bg-transparent"
+                  className="mt-2 text-yellow-800 bg-transparent"
                   onClick={() => onNavigate("add-ip")}
                 >
                   Register as New IP

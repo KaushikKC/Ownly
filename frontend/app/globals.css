@@ -1,83 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated color palette for StoryIP - light neutral background with deep purple accent */
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.15 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.42 0.16 280);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.15 0 0);
-  --muted: oklch(0.93 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.42 0.16 280);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.92 0 0);
-  --input: oklch(0.96 0 0);
-  --ring: oklch(0.42 0.16 280);
-  --chart-1: oklch(0.42 0.16 280);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.15 0 0);
-  --sidebar-primary: oklch(0.42 0.16 280);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.93 0 0);
-  --sidebar-accent-foreground: oklch(0.15 0 0);
-  --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.42 0.16 280);
+  /* Story Foundation Skywash Gradient Theme */
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: rgba(25, 32, 50, 0.8);
+  --card-foreground: #FFFFFF;
+  --popover: rgba(25, 32, 50, 0.9);
+  --popover-foreground: #FFFFFF;
+  --primary: #41B5FF;
+  --primary-foreground: #000000;
+  --secondary: #1380F5;
+  --secondary-foreground: #FFFFFF;
+  --muted: rgba(19, 128, 245, 0.1);
+  --muted-foreground: #99F3FB;
+  --accent: #99F3FB;
+  --accent-foreground: #000000;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(65, 181, 255, 0.3);
+  --input: rgba(25, 32, 50, 0.8);
+  --ring: #41B5FF;
+  --chart-1: #41B5FF;
+  --chart-2: #1380F5;
+  --chart-3: #99F3FB;
+  --chart-4: #3480B1;
+  --chart-5: #E9F6FF;
+  --radius: 12px;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* Force derivative modal to use full width */
+[data-radix-dialog-content] {
+  max-width: none !important;
+  width: 95vw !important;
+  min-width: 90vw !important;
 }
 
 .dark {
-  --background: oklch(0.12 0 0);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.15 0 0);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.15 0 0);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.65 0.16 280);
-  --primary-foreground: oklch(0.12 0 0);
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.65 0.16 280);
-  --accent-foreground: oklch(0.12 0 0);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.22 0 0);
-  --input: oklch(0.22 0 0);
-  --ring: oklch(0.65 0.16 280);
-  --chart-1: oklch(0.65 0.16 280);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.15 0 0);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.65 0.16 280);
-  --sidebar-primary-foreground: oklch(0.12 0 0);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.22 0 0);
-  --sidebar-ring: oklch(0.65 0.16 280);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
 }
 
 @theme inline {
-  --font-sans: var(--font-poppins), "Poppins", "Geist", "Geist Fallback", system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-geist-mono), "Geist Mono", "Geist Mono Fallback", "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+  --font-sans: "Space Grotesk", "Space Grotesk Fallback", sans-serif;
+  --font-display: "Space Grotesk", "Space Grotesk Fallback", sans-serif;
+  --font-mono: "Space Grotesk", "Space Grotesk Fallback", sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -121,6 +130,106 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #000000 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #192032 80%, #000000 100%);
+    color: var(--foreground);
+    min-height: 100vh;
+    font-family: "Space Grotesk", "Space Grotesk Fallback", sans-serif;
   }
+}
+
+* {
+  font-family: "Space Grotesk", "Space Grotesk Fallback", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Space Grotesk", "Space Grotesk Fallback", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Enhanced button styles with solid colors */
+.story-button {
+  min-height: 56px;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  background: #41B5FF;
+  border: 1px solid #41B5FF;
+  color: #000000;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  font-family: "Space Grotesk", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.story-button:hover {
+  /* background: #99F3FB;
+  border-color: #99F3FB; */
+  box-shadow: 0 8px 24px rgba(65, 181, 255, 0.3);
+}
+
+.story-button:active {
+  transform: translateY(0);
+}
+
+/* Enhanced glassy header styles with dark theme */
+.glassy-header {
+  background: rgba(25, 32, 50, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(65, 181, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced glassy card styles with dark theme */
+.glassy-card {
+  background: rgba(25, 32, 50, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(65, 181, 255, 0.2);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.glassy-card:hover {
+  background: rgba(25, 32, 50, 0.8);
+  border-color: rgba(65, 181, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(65, 181, 255, 0.1);
+}
+
+/* Enhanced Skywash gradient backgrounds with black-blue theme */
+.skywash-gradient {
+  background: linear-gradient(135deg, #000000 0%, #1a1a2e 20%, #16213e 40%, #0f3460 60%, #192032 80%, #000000 100%);
+}
+
+.skywash-gradient-reverse {
+  background: linear-gradient(135deg, #000000 0%, #192032 20%, #0f3460 40%, #16213e 60%, #1a1a2e 80%, #000000 100%);
+}
+
+.skywash-accent {
+  background: linear-gradient(135deg, #41B5FF 0%, #99F3FB 100%);
+}
+
+/* Text gradient effects */
+.text-gradient {
+  background: linear-gradient(135deg, #41B5FF 0%, #99F3FB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-secondary {
+  background: linear-gradient(135deg, #1380F5 0%, #41B5FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

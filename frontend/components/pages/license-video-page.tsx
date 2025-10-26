@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import TopHeader from "@/components/header";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -79,7 +80,14 @@ interface LicenseVideoPageProps {
 export default function LicenseVideoPage({
   onNavigate,
 }: LicenseVideoPageProps) {
-  const { isConnected } = useUser();
+  const {
+    user,
+    walletAddress,
+    isConnected,
+    connectWallet,
+    disconnectWallet,
+    logout,
+  } = useUser();
   const [videoUrl, setVideoUrl] = useState("");
   const [videoDetails, setVideoDetails] = useState<VideoDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -212,19 +220,21 @@ export default function LicenseVideoPage({
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <TopHeader
+        userEmail={user?.email || ""}
+        currentPage="license-video"
+        walletAddress={walletAddress || ""}
+        connectedWallet={isConnected}
+        connectedGoogle={!!user?.email}
+        onWalletConnect={connectWallet}
+        onDisconnect={logout}
+        onNavigate={onNavigate}
+      />
+
+      <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="outline"
-              onClick={() => onNavigate("dashboard")}
-              className="flex items-center gap-2"
-            >
-              ← Back to Dashboard
-            </Button>
-          </div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Shield className="w-8 h-8 text-primary" />
             License YouTube Video

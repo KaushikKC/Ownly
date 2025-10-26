@@ -71,26 +71,42 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
     switch (status) {
       case "registered":
         return (
-          <Badge className="bg-green-100 text-green-800">Registered</Badge>
+          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+            Registered
+          </Badge>
         );
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+        return (
+          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+            Pending
+          </Badge>
+        );
       case "draft":
-        return <Badge className="bg-gray-100 text-gray-800">Draft</Badge>;
+        return (
+          <Badge className="bg-white/10 text-white/80 border-white/20">
+            Draft
+          </Badge>
+        );
       default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+        return (
+          <Badge className="bg-white/10 text-white/80 border-white/20">
+            {status}
+          </Badge>
+        );
     }
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{asset.title}</CardTitle>
-          {getStatusBadge(asset.status)}
+    <Card className="w-full glassy-card overflow-hidden hover:border-[#41B5FF]/50 hover:shadow-2xl hover:shadow-[#41B5FF]/20 transition-all cursor-pointer group">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="text-lg text-white line-clamp-2 flex-1 min-w-0">
+            {asset.title}
+          </CardTitle>
+          <div className="shrink-0">{getStatusBadge(asset.status)}</div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-0">
         {asset.thumbnailUrl && (
           <div className="aspect-video bg-muted rounded-lg overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -104,26 +120,46 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
 
         {asset.storyProtocolAssetId ? (
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="license">License</TabsTrigger>
-              <TabsTrigger value="derivative">Derivative</TabsTrigger>
-              <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 bg-white/5 border border-white/10">
+              <TabsTrigger
+                value="overview"
+                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger
+                value="license"
+                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+              >
+                License
+              </TabsTrigger>
+              <TabsTrigger
+                value="derivative"
+                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+              >
+                Derivative
+              </TabsTrigger>
+              <TabsTrigger
+                value="revenue"
+                className="text-xs data-[state=active]:bg-white/10 data-[state=active]:text-white"
+              >
+                Revenue
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="space-y-3">
+            <TabsContent value="overview" className="space-y-4 mt-4">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span className="text-sm font-medium text-green-300">
                   Registered on Story Protocol
                 </span>
               </div>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Asset ID:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs">
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-white/70 shrink-0">Asset ID:</span>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="font-mono text-xs text-white/90 truncate">
                       {asset.storyProtocolAssetId}
                     </span>
                     <Button
@@ -132,22 +168,24 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                       onClick={() =>
                         copyToClipboard(asset.storyProtocolAssetId!, "assetId")
                       }
-                      className="h-6 w-6 p-0"
+                      className="h-6 w-6 p-0 shrink-0 hover:bg-white/10"
                     >
                       {copiedField === "assetId" ? (
-                        <CheckCircle className="w-3 h-3" />
+                        <CheckCircle className="w-3 h-3 text-green-400" />
                       ) : (
-                        <Copy className="w-3 h-3" />
+                        <Copy className="w-3 h-3 text-white/60" />
                       )}
                     </Button>
                   </div>
                 </div>
 
                 {asset.nftTokenId && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">NFT Token ID:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-white/70 shrink-0">
+                      NFT Token ID:
+                    </span>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="font-mono text-xs text-white/90 truncate">
                         {asset.nftTokenId}
                       </span>
                       <Button
@@ -156,12 +194,12 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                         onClick={() =>
                           copyToClipboard(asset.nftTokenId!, "tokenId")
                         }
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 shrink-0 hover:bg-white/10"
                       >
                         {copiedField === "tokenId" ? (
-                          <CheckCircle className="w-3 h-3" />
+                          <CheckCircle className="w-3 h-3 text-green-400" />
                         ) : (
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3 h-3 text-white/60" />
                         )}
                       </Button>
                     </div>
@@ -169,10 +207,10 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                 )}
 
                 {asset.nftContractAddress && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Contract:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-white/70 shrink-0">Contract:</span>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="font-mono text-xs text-white/90 truncate">
                         {asset.nftContractAddress.slice(0, 6)}...
                         {asset.nftContractAddress.slice(-4)}
                       </span>
@@ -182,12 +220,12 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                         onClick={() =>
                           copyToClipboard(asset.nftContractAddress!, "contract")
                         }
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 shrink-0 hover:bg-white/10"
                       >
                         {copiedField === "contract" ? (
-                          <CheckCircle className="w-3 h-3" />
+                          <CheckCircle className="w-3 h-3 text-green-400" />
                         ) : (
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3 h-3 text-white/60" />
                         )}
                       </Button>
                     </div>
@@ -195,9 +233,9 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                 )}
 
                 {asset.registeredAt && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Registered:</span>
-                    <span className="text-xs">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-white/70 shrink-0">Registered:</span>
+                    <span className="text-xs text-white/90">
                       {new Date(asset.registeredAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -231,9 +269,11 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                     Story Protocol Details
                   </h4>
                   <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Asset ID:</span>
-                      <span className="font-mono">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-muted-foreground shrink-0">
+                        Asset ID:
+                      </span>
+                      <span className="font-mono text-xs truncate">
                         {storyData.storyProtocolAssetId}
                       </span>
                     </div>
@@ -266,11 +306,11 @@ export default function StoryProtocolCard({ asset }: StoryProtocolCardProps) {
                   <h3 className="text-lg font-medium">
                     Derivative Registration
                   </h3>
-                  <DerivativeRegistrationModal
-                    parentAsset={asset}
-                    onSuccess={() => window.location.reload()}
-                  />
                 </div>
+                <DerivativeRegistrationModal
+                  parentAsset={asset}
+                  onSuccess={() => window.location.reload()}
+                />
                 <div className="text-sm text-muted-foreground">
                   Register a derivative work based on this IP asset. This will
                   create a new IP asset that references this one as its parent.

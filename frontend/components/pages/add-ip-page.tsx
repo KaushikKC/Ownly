@@ -4,28 +4,41 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Check, Youtube, Loader2, AlertCircle } from "lucide-react";
+import { Check, Loader2, AlertCircle } from "lucide-react";
 import LicenseSelector from "@/components/license-selector";
+import AlreadyRegisteredModal from "@/components/already-registered-modal";
+import TopHeader from "@/components/header";
 import { useUser } from "@/lib/user-context";
 import apiClient from "@/lib/api/client";
 import StoryProtocolService from "@/lib/storyProtocol";
+import Image from "next/image";
+
+type PageType =
+  | "login"
+  | "dashboard"
+  | "add-ip"
+  | "approvals"
+  | "verify-ip"
+  | "settings"
+  | "youtube-import"
+  | "license-video"
+  | "youtube-link";
 
 interface AddIPPageProps {
-  onNavigate: (
-    page:
-      | "dashboard"
-      | "add-ip"
-      | "approvals"
-      | "login"
-      | "verify-ip"
-      | "settings"
-  ) => void;
+  onNavigate: (page: PageType) => void;
 }
 
 // Mock collaborators removed as they were unused
 
 export default function AddIPPage({ onNavigate }: AddIPPageProps) {
-  const { user } = useUser();
+  const {
+    user,
+    walletAddress,
+    isConnected,
+    connectWallet,
+    disconnectWallet,
+    logout,
+  } = useUser();
   const [step, setStep] = useState(1);
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
@@ -47,6 +60,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
     message: string;
   } | null>(null);
   const [isVerifyingOwnership, setIsVerifyingOwnership] = useState(false);
+
   const [selectedCollaborators, setSelectedCollaborators] = useState<
     Array<{
       id: string;
@@ -56,6 +70,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
       approval: boolean;
     }>
   >([]);
+
   const [licenseType, setLicenseType] = useState("commercial");
   const [royaltyShare, setRoyaltyShare] = useState("10");
   const [mintingFee, setMintingFee] = useState("0.1");
@@ -84,6 +99,15 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
     }>;
   } | null>(null);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [showAlreadyRegisteredModal, setShowAlreadyRegisteredModal] =
+    useState(false);
+  const [existingAsset, setExistingAsset] = useState<{
+    assetId: string;
+    title: string;
+    registeredAt: string;
+    storyProtocolAssetId: string;
+    owner: string;
+  } | null>(null);
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [storyProtocolData, setStoryProtocolData] = useState<{
     assetId: string;
@@ -95,7 +119,6 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
   } | null>(null);
   const [currentAssetId, setCurrentAssetId] = useState<string | null>(null);
 
-  // Auto-fetch YouTube data when URL is entered
   const handleUrlChange = async (newUrl: string) => {
     setUrl(newUrl);
     setVideoError(null);
@@ -169,20 +192,30 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
       // Show that we're using the user's YouTube channel ID
       console.log("Using YouTube channel ID:", user.youtubeChannelId);
 
-      const response = await apiClient.verifyYouTubeOwnership(
-        videoUrl,
-        userEmail
+      const response = await fetch(
+        "http://localhost:5000/api/youtube/verify-ownership",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            videoUrl,
+            userEmail,
+          }),
+        }
       );
+      const data = await response.json();
 
-      if (response.success) {
+      if (data.success) {
         setOwnershipStatus({
-          isOwner: response.isOwner,
-          channelInfo: response.channelInfo,
-          message: response.message,
+          isOwner: data.isOwner,
+          channelInfo: data.channelInfo,
+          message: data.message,
         });
 
         // If ownership is verified, set the current user as the only collaborator with 100% ownership
-        if (response.isOwner && user) {
+        if (data.isOwner && user) {
           // Only add collaborator if user has a valid ID
           if (user.id && user.id !== "current-user") {
             setSelectedCollaborators([
@@ -216,6 +249,23 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
               violationData
             );
 
+            // Check if user has already registered this IP
+            if (violationResponse.isAlreadyRegistered) {
+              // Show a proper modal with existing asset details
+              const existingAssetData = violationResponse.violations.urlMatch;
+              if (existingAssetData) {
+                setExistingAsset({
+                  assetId: existingAssetData.assetId,
+                  title: existingAssetData.title,
+                  registeredAt: existingAssetData.registeredAt,
+                  storyProtocolAssetId: existingAssetData.storyProtocolAssetId,
+                  owner: existingAssetData.owner,
+                });
+                setShowAlreadyRegisteredModal(true);
+                return; // Stop the flow until user decides
+              }
+            }
+
             if (violationResponse.hasViolations) {
               setViolations(violationResponse.violations);
               setShowDisputeModal(true);
@@ -242,6 +292,30 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
   const handleOwnershipChange = (id: string, value: number) => {
     setSelectedCollaborators((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ownership: value } : c))
+    );
+  };
+
+  const addCollaborator = () => {
+    const newId = (selectedCollaborators.length + 1).toString();
+    setSelectedCollaborators((prev) => [
+      ...prev,
+      {
+        id: newId,
+        name: `@collaborator${newId}`,
+        wallet: "0x0000...0000",
+        ownership: 0,
+        approval: false,
+      },
+    ]);
+  };
+
+  const removeCollaborator = (id: string) => {
+    setSelectedCollaborators((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const updateCollaborator = (id: string, field: string, value: string) => {
+    setSelectedCollaborators((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
   };
 
@@ -350,27 +424,21 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
 
   if (registrationComplete) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="border-b border-border bg-card sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
-            <button
-              onClick={() => onNavigate("dashboard")}
-              className="p-2 hover:bg-muted rounded-lg"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-2xl font-bold text-foreground">
-              Register New IP
-            </h1>
-          </div>
-        </div>
-
-        {/* Success Content */}
-        <div className="max-w-2xl mx-auto px-6 py-12">
-          <Card className="p-12 border border-border text-center">
+      <div className="min-h-screen">
+        <TopHeader
+          currentPage="add-ip"
+          userEmail={user?.email || ""}
+          walletAddress={walletAddress || ""}
+          connectedWallet={isConnected}
+          connectedGoogle={!!user?.email}
+          onWalletConnect={connectWallet}
+          onDisconnect={logout}
+          onNavigate={onNavigate}
+        />
+        <div className="max-w-2xl mx-auto px-6 py-12 pt-30">
+          <Card className="glassy-card p-12 text-center">
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+              <div className="w-16 h-16 bg-white/20 flex items-center justify-center rounded-full">
                 <Check className="w-8 h-8 text-green-600" />
               </div>
             </div>
@@ -381,70 +449,45 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
               Your IP has been successfully registered on Story Protocol.
             </p>
 
-            <div className="space-y-4 mb-8 text-left bg-muted p-6 rounded-lg">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Story Protocol Asset ID
-                </p>
-                <p className="font-mono font-semibold text-foreground">
-                  {storyProtocolData?.assetId || "Loading..."}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">NFT Token ID</p>
-                <p className="font-mono font-semibold text-foreground">
-                  {storyProtocolData?.nftTokenId || "Loading..."}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  NFT Contract Address
-                </p>
-                <p className="font-mono font-semibold text-foreground">
-                  {storyProtocolData?.nftContractAddress || "Loading..."}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">License ID</p>
-                <p className="font-mono font-semibold text-foreground">
-                  {storyProtocolData?.licenseId || "Loading..."}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">IPFS Hash</p>
-                <p className="font-mono font-semibold text-foreground">
-                  {storyProtocolData?.ipfsHash || "Loading..."}
-                </p>
-              </div>
-              {storyProtocolData?.transactionHashes && (
+            {storyProtocolData && (
+              <div className="space-y-4 mb-8 text-left bg-white/40 p-6">
+                <div>
+                  <p className="text-sm text-muted-foreground">Story IP ID</p>
+                  <p className="font-mono font-semibold text-foreground">
+                    #{storyProtocolData.assetId}
+                  </p>
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Transaction Hashes
+                    Transaction Hash
                   </p>
-                  <div className="space-y-2">
-                    {Object.entries(storyProtocolData.transactionHashes).map(
-                      ([key, hash]) => (
-                        <div key={key}>
-                          <p className="text-xs text-muted-foreground capitalize">
-                            {key.replace(/([A-Z])/g, " $1").trim()}:
-                          </p>
-                          <p className="font-mono text-xs text-foreground">
-                            {hash}
-                          </p>
-                        </div>
-                      )
-                    )}
-                  </div>
+                  <p className="font-mono font-semibold text-foreground">
+                    {storyProtocolData.transactionHashes.registration}
+                  </p>
                 </div>
-              )}
-            </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">IPFS CID</p>
+                  <p className="font-mono font-semibold text-foreground">
+                    {storyProtocolData.ipfsHash}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">NFT Contract</p>
+                  <p className="font-mono font-semibold text-foreground">
+                    {storyProtocolData.nftContractAddress}
+                  </p>
+                </div>
+              </div>
+            )}
 
-            <Button
-              onClick={() => onNavigate("dashboard")}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              Back to Dashboard
-            </Button>
+            <div className="flex justify-center">
+              <Button
+                onClick={() => onNavigate("dashboard")}
+                className="story-button"
+              >
+                Back to Dashboard
+              </Button>
+            </div>
           </Card>
         </div>
       </div>
@@ -452,32 +495,26 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
-          <button
-            onClick={() => onNavigate("dashboard")}
-            className="p-2 hover:bg-muted rounded-lg"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold text-foreground">
-            Register New IP
-          </h1>
-        </div>
-      </div>
+    <div className="min-h-screen">
+      <TopHeader
+        currentPage="add-ip"
+        userEmail={user?.email || ""}
+        walletAddress={walletAddress || ""}
+        connectedWallet={isConnected}
+        connectedGoogle={!!user?.email}
+        onWalletConnect={connectWallet}
+        onDisconnect={disconnectWallet}
+        onNavigate={onNavigate}
+      />
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-6 py-8 pt-30">
         {/* Step Indicator */}
         <div className="flex gap-2 mb-8">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex-1">
               <div
-                className={`h-2 rounded-full ${
-                  s <= step ? "bg-primary" : "bg-muted"
-                }`}
+                className={`h-2 ${s <= step ? "bg-[#41B5FF]" : "bg-white/40"}`}
               ></div>
               <p className="text-xs text-muted-foreground mt-2">Step {s}</p>
             </div>
@@ -490,164 +527,110 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
             {/* Step 1 - Source Input */}
             {step === 1 && (
               <>
-                <Card className="p-6 border border-border">
-                  <label className="block text-sm font-semibold text-foreground mb-3">
+                <Card className="glassy-card p-6">
+                  <label className="block text-sm font-semibold mb-3 placeholder:text-white">
                     Source URL
                   </label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="url"
-                      value={url}
-                      onChange={(e) => handleUrlChange(e.target.value)}
-                      placeholder="https://youtube.com/watch?v=abc123"
-                      className="flex-1"
-                    />
-                    {isLoadingVideo && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Loading...</span>
-                      </div>
-                    )}
-                  </div>
+                  <Input
+                    type="text"
+                    value={url}
+                    onChange={(e) => handleUrlChange(e.target.value)}
+                    placeholder="https://youtube.com/watch?v=..."
+                    className="w-full border-[#41B5FF]/30 bg-white/20"
+                  />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Paste a YouTube URL to auto-fetch video details
+                    Paste a YouTube or Instagram URL to auto-detect
+                    collaborators
                   </p>
-                  {videoError && (
-                    <div className="flex items-center gap-2 text-red-600 mt-2">
-                      <AlertCircle className="w-4 h-4" />
-                      <span className="text-sm">{videoError}</span>
-                    </div>
-                  )}
                 </Card>
 
-                <Card className="p-6 border border-border">
-                  <label className="block text-sm font-semibold text-foreground mb-3">
-                    Metadata Preview
-                  </label>
-                  {thumbnailUrl ? (
-                    <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-4">
-                      <img
-                        src={thumbnailUrl}
-                        alt="Video preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center mb-4">
-                      <Youtube className="w-12 h-12 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {title || "Enter a YouTube URL to see video details"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Platform: YouTube
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Publish Date: {publishDate || "N/A"}
-                    </p>
-                    {duration > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Duration: {Math.floor(duration / 60)}:
-                        {(duration % 60).toString().padStart(2, "0")}
+                {isLoadingVideo && (
+                  <Card className="glassy-card p-6">
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 animate-spin text-[#41B5FF]" />
+                      <p className="text-sm text-muted-foreground">
+                        Loading video data...
                       </p>
-                    )}
-                    {viewCount > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Views: {viewCount.toLocaleString()}
-                      </p>
-                    )}
-                    {/* <p className="text-xs text-muted-foreground mt-2">
-                      Detected Collaborators: @alexwave, @mira.codes, @johnfilm
-                    </p> */}
-                  </div>
-                </Card>
-
-                {/* Ownership Verification */}
-                {ownershipStatus && (
-                  <Card
-                    className={`p-6 border ${
-                      ownershipStatus.isOwner
-                        ? "border-green-200 bg-green-50"
-                        : "border-red-200 bg-red-50"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      {ownershipStatus.isOwner ? (
-                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                          <Check className="w-4 h-4 text-green-600" />
-                        </div>
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                          <AlertCircle className="w-4 h-4 text-red-600" />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <h3
-                          className={`font-semibold ${
-                            ownershipStatus.isOwner
-                              ? "text-green-800"
-                              : "text-red-800"
-                          }`}
-                        >
-                          {ownershipStatus.isOwner
-                            ? "✅ Ownership Verified"
-                            : "❌ Ownership Not Verified"}
-                        </h3>
-                        <p
-                          className={`text-sm mt-1 ${
-                            ownershipStatus.isOwner
-                              ? "text-green-700"
-                              : "text-red-700"
-                          }`}
-                        >
-                          {ownershipStatus.message}
-                        </p>
-                        {ownershipStatus.channelInfo && (
-                          <div className="mt-2 text-xs text-muted-foreground">
-                            <p>
-                              Channel:{" "}
-                              {ownershipStatus.channelInfo.channelTitle}
-                            </p>
-                            <p>
-                              Channel ID:{" "}
-                              {ownershipStatus.channelInfo.channelId}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Show YouTube channel info */}
-                        {user?.youtubeChannelId && (
-                          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
-                            <div className="flex items-center text-xs text-green-700">
-                              <span className="mr-1">✅</span>
-                              <span className="font-medium">
-                                YouTube Channel Ready:
-                              </span>
-                            </div>
-                            <div className="mt-1 text-xs text-green-600">
-                              <p>Channel ID: {user.youtubeChannelId}</p>
-                              <p className="text-green-500">
-                                Your YouTube channel is set and ready for
-                                verification
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </Card>
                 )}
 
-                {/* Loading state for ownership verification */}
-                {isVerifyingOwnership && (
-                  <Card className="p-6 border border-border">
+                {videoError && (
+                  <Card className="glassy-card p-6 border-red-500/20 bg-red-500/10">
                     <div className="flex items-center gap-3">
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      <span className="text-sm text-muted-foreground">
-                        Verifying channel ownership...
-                      </span>
+                      <AlertCircle className="w-5 h-5 text-red-500" />
+                      <p className="text-sm text-red-400">{videoError}</p>
+                    </div>
+                  </Card>
+                )}
+
+                {title && !videoError && (
+                  <Card className="glassy-card p-6">
+                    <label className="block text-sm font-semibold text-foreground mb-3">
+                      Metadata Preview
+                    </label>
+                    <div className="aspect-video bg-white/40 overflow-hidden mb-4">
+                      {thumbnailUrl && (
+                        <Image
+                          src={thumbnailUrl}
+                          alt="Video preview"
+                          width={400}
+                          height={225}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Platform: YouTube
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Publish Date: {publishDate}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Channel: {channelTitle}
+                      </p>
+                    </div>
+                  </Card>
+                )}
+
+                {isVerifyingOwnership && (
+                  <Card className="glassy-card p-6">
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 animate-spin text-[#41B5FF]" />
+                      <p className="text-sm text-muted-foreground">
+                        Verifying ownership...
+                      </p>
+                    </div>
+                  </Card>
+                )}
+
+                {ownershipStatus && (
+                  <Card
+                    className={`glassy-card p-6 ${
+                      ownershipStatus.isOwner
+                        ? "border-green-500/20 bg-green-500/10"
+                        : "border-red-500/20 bg-red-500/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {ownershipStatus.isOwner ? (
+                        <Check className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                      )}
+                      <p
+                        className={`text-sm ${
+                          ownershipStatus.isOwner
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {ownershipStatus.message}
+                      </p>
                     </div>
                   </Card>
                 )}
@@ -656,48 +639,16 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                   <Button
                     variant="outline"
                     onClick={() => onNavigate("dashboard")}
-                    className="flex-1"
+                    className="flex-1 bg-white/60 border-[#41B5FF]/30"
                   >
                     Cancel
                   </Button>
                   <Button
-                    onClick={() => {
-                      if (
-                        violations &&
-                        (violations.urlMatch ||
-                          (violations.titleMatches &&
-                            violations.titleMatches.length > 0) ||
-                          (violations.thumbnailMatches &&
-                            violations.thumbnailMatches.length > 0))
-                      ) {
-                        setShowDisputeModal(true);
-                      } else {
-                        setStep(2);
-                      }
-                    }}
-                    disabled={
-                      !ownershipStatus?.isOwner ||
-                      !!(
-                        violations &&
-                        (violations.urlMatch ||
-                          (violations.titleMatches &&
-                            violations.titleMatches.length > 0) ||
-                          (violations.thumbnailMatches &&
-                            violations.thumbnailMatches.length > 0))
-                      )
-                    }
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setStep(2)}
+                    className="flex-1"
+                    disabled={!ownershipStatus?.isOwner}
                   >
-                    {ownershipStatus?.isOwner
-                      ? violations &&
-                        (violations.urlMatch ||
-                          (violations.titleMatches &&
-                            violations.titleMatches.length > 0) ||
-                          (violations.thumbnailMatches &&
-                            violations.thumbnailMatches.length > 0))
-                        ? "⚠️ Duplicate Detected - Cannot Proceed"
-                        : "Next: Ownership Setup"
-                      : "Verify Ownership First"}
+                    Next: Ownership Setup
                   </Button>
                 </div>
               </>
@@ -706,81 +657,107 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
             {/* Step 2 - Ownership Setup */}
             {step === 2 && (
               <>
-                <Card className="p-6 border border-border">
-                  <label className="block text-sm font-semibold text-foreground mb-4">
-                    Content Owner
-                  </label>
+                <Card className="glassy-card p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="block text-sm font-semibold text-foreground">
+                      Collaborators
+                    </label>
+                    <button
+                      onClick={addCollaborator}
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-[#41B5FF]/20 text-[#41B5FF] rounded-full hover:bg-[#41B5FF]/30 transition-colors"
+                    >
+                      <span>+</span>
+                      <span>Add Collaborator</span>
+                    </button>
+                  </div>
+
                   <div className="space-y-4">
-                    {selectedCollaborators.length > 0 ? (
-                      selectedCollaborators.map((collab) => (
+                    {selectedCollaborators.map((collab) => (
+                      <div
+                        key={collab.id}
+                        className="flex items-center gap-4 p-4 border border-white/20 rounded-lg"
+                      >
                         <div
-                          key={collab.id}
-                          className="flex items-center gap-4 p-4 bg-muted rounded-lg"
+                          className="w-10 h-10 flex items-center justify-center shrink-0"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #41B5FF 0%, #1380F5 100%)",
+                          }}
                         >
-                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-semibold text-primary">
-                              {collab.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground">
-                              {collab.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {collab.wallet}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className="text-sm font-semibold text-foreground">
-                              {collab.ownership}%
-                            </span>
-                            <span className="text-xs font-medium text-green-600">
-                              ✅ Owner
-                            </span>
-                          </div>
+                          <span className="text-sm font-semibold text-white">
+                            {collab.name.charAt(1).toUpperCase()}
+                          </span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p className="text-sm">No collaborators added yet</p>
-                        <p className="text-xs">
-                          You can add collaborators if needed
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <input
+                            type="text"
+                            value={collab.name}
+                            onChange={(e) =>
+                              updateCollaborator(
+                                collab.id,
+                                "name",
+                                e.target.value
+                              )
+                            }
+                            className="w-full bg-transparent border-b border-white/20 text-sm font-medium text-foreground focus:border-[#41B5FF] focus:outline-none"
+                            placeholder="Collaborator name"
+                          />
+                          <input
+                            type="text"
+                            value={collab.wallet}
+                            onChange={(e) =>
+                              updateCollaborator(
+                                collab.id,
+                                "wallet",
+                                e.target.value
+                              )
+                            }
+                            className="w-full bg-transparent border-b border-white/20 text-xs text-muted-foreground focus:border-[#41B5FF] focus:outline-none mt-1"
+                            placeholder="Wallet address"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={collab.ownership}
+                            onChange={(e) =>
+                              handleOwnershipChange(
+                                collab.id,
+                                Number.parseInt(e.target.value)
+                              )
+                            }
+                            className="w-24"
+                          />
+                          <span className="text-sm font-semibold text-foreground w-12 text-right">
+                            {collab.ownership}%
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => removeCollaborator(collab.id)}
+                          className="shrink-0 rounded-full transition-colors"
+                          title="Remove collaborator"
+                        >
+                          <span className="text-red-400 text-xl">×</span>
+                        </button>
                       </div>
-                    )}
+                    ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-4">
                     Total: {totalOwnership}%
                   </p>
-
-                  {/* Add Collaborator Button */}
-                  <div className="mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // TODO: Implement add collaborator functionality
-                        console.log("Add collaborator clicked");
-                      }}
-                      className="w-full"
-                    >
-                      + Add Collaborator
-                    </Button>
-                  </div>
                 </Card>
 
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={() => setStep(1)}
-                    className="flex-1"
+                    className="flex-1 bg-white/60 border-[#41B5FF]/30"
                   >
                     Back
                   </Button>
-                  <Button
-                    onClick={() => setStep(3)}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
+                  <Button onClick={() => setStep(3)} className="flex-1">
                     Next: License & Terms
                   </Button>
                 </div>
@@ -795,7 +772,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                   onChange={setLicenseType}
                 />
 
-                <Card className="p-6 border border-border">
+                <Card className="glassy-card p-6">
                   <label className="block text-sm font-semibold text-foreground mb-3">
                     Royalty Share (%)
                   </label>
@@ -804,28 +781,24 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                     value={royaltyShare}
                     onChange={(e) => setRoyaltyShare(e.target.value)}
                     placeholder="10"
-                    className="w-full"
+                    className="w-full bg-white/20 border-[#41B5FF]/30"
                   />
                 </Card>
 
-                <Card className="p-6 border border-border">
+                <Card className="glassy-card p-6">
                   <label className="block text-sm font-semibold text-foreground mb-3">
-                    Minting Fee ($IP)
+                    Minting Fee (ETH)
                   </label>
                   <Input
                     type="number"
-                    step="0.1"
                     value={mintingFee}
                     onChange={(e) => setMintingFee(e.target.value)}
                     placeholder="0.1"
-                    className="w-full"
+                    className="w-full bg-white/20 border-[#41B5FF]/30"
                   />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Fee required to mint a license for this IP
-                  </p>
                 </Card>
 
-                <Card className="p-6 border border-border">
+                <Card className="glassy-card p-6">
                   <label className="block text-sm font-semibold text-foreground mb-3">
                     License Description
                   </label>
@@ -833,7 +806,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                     value={licenseDescription}
                     onChange={(e) => setLicenseDescription(e.target.value)}
                     placeholder="Describe the license terms..."
-                    className="w-full p-3 border border-border rounded-lg text-sm"
+                    className="w-full p-3 border border-[#41B5FF]/30 bg-white/20 text-sm text-foreground"
                     rows={4}
                   />
                 </Card>
@@ -842,14 +815,11 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                   <Button
                     variant="outline"
                     onClick={() => setStep(2)}
-                    className="flex-1"
+                    className="flex-1 bg-white/60 border-[#41B5FF]/30"
                   >
                     Back
                   </Button>
-                  <Button
-                    onClick={() => setStep(4)}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
+                  <Button onClick={() => setStep(4)} className="flex-1">
                     Next: Review & Register
                   </Button>
                 </div>
@@ -859,7 +829,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
             {/* Step 4 - Register */}
             {step === 4 && (
               <>
-                <Card className="p-6 border border-border">
+                <Card className="glassy-card p-6">
                   <h3 className="font-semibold text-foreground mb-4">
                     Review Your IP Registration
                   </h3>
@@ -893,14 +863,14 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
                   <Button
                     variant="outline"
                     onClick={() => setStep(3)}
-                    className="flex-1"
+                    className="flex-1 bg-white/60 border-[#41B5FF]/30"
                   >
                     Back
                   </Button>
                   <Button
                     onClick={handleRegister}
                     disabled={isRegistering}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
+                    className="flex-1 disabled:opacity-50"
                   >
                     {isRegistering
                       ? "Registering..."
@@ -913,7 +883,7 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
 
           {/* Sidebar Info */}
           <div className="lg:col-span-1">
-            <Card className="p-6 border border-border sticky top-24">
+            <Card className="glassy-card p-6 sticky top-24">
               <h3 className="font-semibold text-foreground mb-4">
                 Registration Summary
               </h3>
@@ -955,167 +925,17 @@ export default function AddIPPage({ onNavigate }: AddIPPageProps) {
         </div>
       </div>
 
-      {/* Dispute Modal */}
-      {showDisputeModal && violations && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-2xl w-full mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="w-6 h-6 text-yellow-500" />
-              <h3 className="text-lg font-semibold">
-                ⚠️ Possible IP Violation Detected
-              </h3>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              {violations.urlMatch && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="font-medium text-red-800">
-                    Exact URL Match Found:
-                  </p>
-                  <p className="text-sm text-red-700">
-                    This URL is already registered by{" "}
-                    <strong>{violations.urlMatch.owner.name}</strong>
-                  </p>
-                  <p className="text-xs text-red-600">
-                    Registered:{" "}
-                    {new Date(
-                      violations.urlMatch.registeredAt
-                    ).toLocaleDateString()}
-                  </p>
-                </div>
-              )}
-
-              {violations.titleMatches &&
-                violations.titleMatches.length > 0 && (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="font-medium text-yellow-800">
-                      Similar Titles Found:
-                    </p>
-                    {violations.titleMatches.map((match, index: number) => (
-                      <div key={index} className="text-sm text-yellow-700">
-                        • &quot;{match.title}&quot; by {match.owner.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-              {violations.thumbnailMatches &&
-                violations.thumbnailMatches.length > 0 && (
-                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                    <p className="font-medium text-orange-800">
-                      Similar Thumbnails Found:
-                    </p>
-                    {violations.thumbnailMatches.map((match, index: number) => (
-                      <div key={index} className="text-sm text-orange-700">
-                        • &quot;{match.title}&quot; by {match.owner.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowDisputeModal(false);
-                  // Don't clear violations - keep them active to block navigation
-                  // setViolations(null);
-                }}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowDisputeModal(false);
-                  setViolations(null); // Clear violations to allow proceeding
-                  setStep(2); // Proceed to step 2
-                }}
-                className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
-              >
-                Proceed Anyway
-              </Button>
-              <Button
-                onClick={async () => {
-                  try {
-                    // Record dispute using Story Protocol SDK
-                    const storyProtocolService = new StoryProtocolService();
-
-                    // Get the IP ID from the violation
-                    const ipId =
-                      violations.urlMatch?.storyProtocolAssetId ||
-                      (violations.titleMatches &&
-                        violations.titleMatches[0]?.storyProtocolAssetId);
-
-                    if (!ipId) {
-                      alert(
-                        "Cannot record dispute: The existing IP asset is not registered with Story Protocol. Only assets registered on Story Protocol can be disputed."
-                      );
-                      return;
-                    }
-
-                    // Create dispute evidence
-                    const disputeEvidence = {
-                      reason: "Duplicate IP claim",
-                      claimantAddress:
-                        user?.walletAddress ||
-                        "0x0000000000000000000000000000000000000000",
-                      originalUrl: url,
-                      originalTitle: title,
-                      timestamp: new Date().toISOString(),
-                      evidence:
-                        "User attempting to register already claimed IP asset",
-                    };
-
-                    // Generate unique IPFS CID for this dispute
-                    // Each dispute needs a unique CID that hasn't been used before
-                    const evidenceCid =
-                      await storyProtocolService.generateDisputeCID(
-                        disputeEvidence
-                      );
-                    console.log("Generated unique dispute CID:", evidenceCid);
-
-                    const disputeResponse =
-                      await storyProtocolService.recordDispute(
-                        ipId,
-                        "Duplicate IP claim",
-                        evidenceCid
-                      );
-
-                    if (disputeResponse.success) {
-                      // Also save to backend for tracking
-                      await apiClient.recordDispute({
-                        assetId:
-                          violations.urlMatch?.assetId ||
-                          (violations.titleMatches &&
-                            violations.titleMatches[0]?.assetId) ||
-                          "",
-                        disputeReason: "Duplicate IP claim",
-                        claimantAddress:
-                          user?.walletAddress ||
-                          "0x0000000000000000000000000000000000000000",
-                      });
-
-                      setShowDisputeModal(false);
-                      setViolations(null);
-                      alert(
-                        `Dispute recorded successfully! Transaction: ${disputeResponse.transactionHash}`
-                      );
-                    }
-                  } catch (error) {
-                    console.error("Failed to record dispute:", error);
-                    alert("Failed to record dispute. Please try again.");
-                  }
-                }}
-                className="flex-1 bg-red-600 hover:bg-red-700"
-              >
-                Raise Dispute
-              </Button>
-            </div>
-          </Card>
-        </div>
+      {/* Already Registered Modal */}
+      {existingAsset && (
+        <AlreadyRegisteredModal
+          isOpen={showAlreadyRegisteredModal}
+          onClose={() => setShowAlreadyRegisteredModal(false)}
+          onProceed={() => {
+            setShowAlreadyRegisteredModal(false);
+            // Continue with registration - the user has confirmed they want to proceed
+          }}
+          existingAsset={existingAsset}
+        />
       )}
     </div>
   );
